@@ -1,0 +1,113 @@
+{
+  "uid": "kipsake-sleep-floor",
+  "title": "Kipsake Sleep Floor",
+  "tags": [
+    "defiantjazz"
+  ],
+  "timezone": "utc",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "The game",
+      "type": "link",
+      "url": "http://localhost:8080",
+      "targetBlank": true,
+      "icon": "external link"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 12
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Play the game\n\n**[Open The Defiant Jazz Incident](https://nicolevanderhoeven.com/defiantjazz/?where=local)**\n\nAn observability murder mystery on Kipsake's Sleep Floor. You watch the testimonies and choose what to look into, while your own AI agent investigates the telemetry in this stack.\n\nEverything here runs on your machine, from open-source parts. Nothing goes to Grafana Cloud.\n"
+      }
+    },
+    {
+      "id": 2,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 12
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Ask your AI agent\n\nConnect any MCP-capable agent (Claude Code, Cursor, Codex and others) to the read-only Grafana MCP server:\n\n```\nclaude mcp add --transport http grafana-local http://localhost:8000/mcp\n```\n\nor point an MCP \"streamable-http\" entry at `http://localhost:8000/mcp`. No MCP? Use [`gcx`](https://gra.fan/gcxrepo) with a Viewer service account (see the README).\n"
+      }
+    },
+    {
+      "id": 3,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 12
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## The data\n\nThree open-source data sources are already set up, and the case is in all of them, tagged `service_namespace=\"kipsake-sleep-floor\"` (`service.namespace` in Tempo):\n\n| Signal | Data source | UID |\n|---|---|---|\n| Logs | Loki | `loki` |\n| Metrics | Prometheus | `prometheus` |\n| Traces | Tempo | `tempo` |\n\nOpen [Explore](/explore) to look yourself. Set Grafana's time zone to UTC so the times on screen match the story's.\n"
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Sleep Floor log lines by source",
+      "description": "How much of the case is in Loki, by source. It only counts lines; it says nothing about the case.",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range",
+          "expr": "sum by (service_name) (count_over_time({service_namespace=\"kipsake-sleep-floor\"} [$__auto]))",
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

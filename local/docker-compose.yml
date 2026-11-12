@@ -1,0 +1,190 @@
+# The Defiant Jazz Incident, fully open source on your own machine.
+#
+#   docker compose up -d
+#
+# starts Loki, Prometheus, Tempo, Grafana and the Grafana MCP server, then loads the case into them
+# and prints a ready-to-paste `gcx login` line (`docker compose logs gcx-token`).
+# Open Grafana at http://localhost:3000. Play the story in your browser at https://nicolevanderhoeven.com/defiantjazz/?where=local
+# Nothing here talks to Grafana Cloud.
+#
+# Ports are bound to 127.0.0.1 so only this machine can reach them. Each can be moved with an environment
+# variable (or local/.env) if something else already uses it: DJ_GRAFANA_PORT, DJ_MCP_PORT,
+# DJ_LOKI_PORT, DJ_PROMETHEUS_PORT, DJ_TEMPO_PORT, DJ_OTLP_PORT and DJ_ASSISTANT_PORT.
+name: defiantjazz
+
+x-grafana-no-phone-home: &grafana-no-phone-home
+  # A local stack shouldn't call out: no usage reports, no update checks, no news feed, no plugin downloads.
+  GF_ANALYTICS_REPORTING_ENABLED: "false"
+  GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+  GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+  GF_ANALYTICS_FEEDBACK_LINKS_ENABLED: "false"
+  GF_NEWS_NEWS_FEED_ENABLED: "false"
+
+services:
+  loki:
+    image: grafana/loki:3.7.9
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "127.0.0.1:${DJ_LOKI_PORT:-3100}:3100"
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-otlp-receiver
+      - --storage.tsdb.retention.time=3650d
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:${DJ_PROMETHEUS_PORT:-9090}:9090"
+
+  tempo:
+    # Also takes OTLP over gRPC on 4317 inside the stack (not published): that's how the Grafana MCP server and Grafana
+    # send the traces of your agent's calls here (see local/tempo.yaml and "Watch your agent investigate" in the README).
+    # 2.9, not 2.10: Tempo 2.10 can't search this case's historical traces (a search finds none, though a trace opens by its ID).
+    image: grafana/tempo:2.9.5
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "127.0.0.1:${DJ_TEMPO_PORT:-3200}:3200"
+      - "127.0.0.1:${DJ_OTLP_PORT:-4318}:4318"
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    environment:
+      <<: *grafana-no-phone-home
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Anyone on this machine can look around without signing in (they get the Viewer role).
+      # Sign in as the admin to change things.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # Don't fetch the default drilldown apps from grafana.com on start-up.
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/kipsake-sleep-floor.json
+      GF_SERVER_ROOT_URL: http://localhost:${DJ_GRAFANA_PORT:-3000}/
+      # Grafana's own traces go to the local Tempo. Every query your agent runs through gcx or the MCP server is a
+      # request to Grafana, so its trace carries the query (and the service account that sent it). Set it to an empty
+      # value in local/.env (DJ_GRAFANA_TRACES=) to switch this off.
+      GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: ${DJ_GRAFANA_TRACES-tempo:4317}
+      GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION: w3c
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${DJ_GRAFANA_PORT:-3000}:3000"
+    depends_on: [loki, prometheus, tempo]
+
+  # Loads the case into Loki, Prometheus and Tempo, then exits. It waits for them to be ready, loads the
+  # whole history with the incident on the latest Thursday, and skips any signal that is already there, so
+  # `docker compose up -d` is safe to repeat. Loki, Prometheus and Tempo keep their data in volumes, so
+  # `docker compose down` keeps the case and `docker compose down -v` clears it (the next `up` loads it again).
+  loader:
+    build:
+      context: ..
+      dockerfile: local/loader/Dockerfile
+    volumes:
+      - ../loader:/app/loader:ro
+      - ../telemetry:/app/telemetry:ro
+      # It leaves the incident night's window here (for the gcx-token service to print).
+      - case-window:/window
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      LOCAL_LOKI_OTLP: http://loki:3100/otlp/v1/logs
+      LOCAL_PROMETHEUS_OTLP: http://prometheus:9090/api/v1/otlp/v1/metrics
+      LOCAL_TEMPO_OTLP: http://tempo:4318/v1/traces
+      # Only used to print links you can open from your browser.
+      GRAFANA_URL: http://localhost:${DJ_GRAFANA_PORT:-3000}
+    command: ["--target", "local", "--incident-date", "latest", "--wait", "180", "--skip-if-loaded", "--window-file", "/window/case-window.json"]
+    restart: "no"
+    depends_on: [loki, prometheus, tempo]
+
+  # Open-source Grafana MCP server, so any MCP-capable AI agent can investigate the local stack.
+  # Streamable HTTP at http://localhost:8000/mcp. Read-only: write tools are disabled.
+  mcp-grafana:
+    image: grafana/mcp-grafana:2.2.0
+    entrypoint: ["/app/mcp-grafana"]
+    command:
+      - --transport=streamable-http
+      - --address=0.0.0.0:8000
+      - --allowed-hosts=localhost:${DJ_MCP_PORT:-8000},127.0.0.1:${DJ_MCP_PORT:-8000}
+      - --disable-write
+      # Every tool call your agent makes becomes a trace in the local Tempo, with its arguments (the queries it sent).
+      - --include-args-in-spans
+    environment:
+      - GRAFANA_URL=http://grafana:3000
+      - GRAFANA_USERNAME=${GRAFANA_ADMIN_USER:-admin}
+      - GRAFANA_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Optional: set MCP_SERVER_TOKEN in local/.env to require "Authorization: Bearer <token>" from MCP clients.
+      - GRAFANA_SERVER_TOKEN=${MCP_SERVER_TOKEN:-}
+      # Don't send anonymous usage statistics from the local stack.
+      - GRAFANA_USAGE_STATS=false
+      # Where the traces of its tool calls go (OTLP over gRPC), inside the stack. Set DJ_MCP_TRACES= (empty) in
+      # local/.env to switch it off.
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${DJ_MCP_TRACES-http://tempo:4317}
+      # Tempo takes traces only, so don't send logs.
+      - OTEL_LOGS_EXPORTER=none
+    ports:
+      - "127.0.0.1:${DJ_MCP_PORT:-8000}:8000"
+    depends_on: [grafana]
+
+  # Creates a read-only (Viewer) Grafana service account and token for `gcx` and prints the `gcx login` line to paste,
+  # so you don't have to click through Grafana's settings. It runs once and exits; a token it made earlier is kept
+  # and reused, so repeating `up` is safe. Read it with `docker compose logs gcx-token`. The token only reads this
+  # local stack's data, is never written into this repository and only ever shown here.
+  gcx-token:
+    image: curlimages/curl:8.14.1
+    # The volume it keeps the token in is root's.
+    user: "0"
+    entrypoint: ["/bin/sh", "/gcx-token.sh"]
+    environment:
+      GRAFANA_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GRAFANA_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Only used to print the command you run from your own machine.
+      DJ_GRAFANA_URL: http://localhost:${DJ_GRAFANA_PORT:-3000}
+    volumes:
+      - ./gcx-token.sh:/gcx-token.sh:ro
+      - gcx-token-data:/out
+      # The loader leaves the incident night's window here, to print beside the login line.
+      - case-window:/window:ro
+    restart: "no"
+    depends_on: [grafana]
+
+  # Optional, and the only part that needs Grafana Cloud: a second Grafana with Grafana Assistant installed,
+  # at http://localhost:3001 (sign in as admin). Start it with `docker compose --profile assistant up -d`.
+  # Assistant runs its AI backend in Grafana Cloud, so connect it to a Grafana Cloud stack once (see README).
+  grafana-assistant:
+    profiles: [assistant]
+    image: grafana/grafana:13.3.0
+    environment:
+      <<: *grafana-no-phone-home
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Grafana Assistant doesn't support anonymous access, so this one asks you to sign in.
+      GF_PLUGINS_PREINSTALL: grafana-assistant-app
+      GF_AUTH_MANAGED_SERVICE_ACCOUNTS_ENABLED: "true"
+      GF_FEATURE_TOGGLES_ENABLE: externalServiceAccounts
+      GF_SERVER_ROOT_URL: http://localhost:${DJ_ASSISTANT_PORT:-3001}/
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      # Keeps the Assistant connection across restarts.
+      - grafana-assistant-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${DJ_ASSISTANT_PORT:-3001}:3000"
+    depends_on: [loki, prometheus, tempo]
+
+volumes:
+  loki-data:
+  prometheus-data:
+  tempo-data:
+  grafana-data:
+  grafana-assistant-data:
+  gcx-token-data:
+  case-window:

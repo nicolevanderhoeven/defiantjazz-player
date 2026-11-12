@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 1m
+
+storage:
+  tsdb:
+    # The case data is historical (or time-shifted); accept samples far behind the newest one.
+    out_of_order_time_window: 3650d
+
+otlp:
+  # Keep service.name, service.namespace and case_run (the load's incident date) as labels on every series.
+  promote_resource_attributes: [service.name, service.namespace, case_run]

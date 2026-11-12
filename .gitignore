@@ -1,0 +1,60 @@
+# Allowlist: ignore everything, then unignore only what players need.
+# New files stay out of Git until they are named here on purpose.
+*
+
+# The repository's own files
+!/.gitignore
+!/README.md
+
+# The investigator's instructions for their AI agent
+!/agent-kit/
+!/agent-kit/AGENTS.md
+
+# The case file for chatbots (the game's setup screen points to it)
+!/game/
+!/game/ai-evidence/
+!/game/ai-evidence/case-bundle.md
+
+# Case telemetry and the loader that puts it into Loki, Prometheus and Tempo
+!/telemetry/
+!/telemetry/*.log
+!/telemetry/metrics.csv
+!/loader/
+!/loader/load.py
+!/loader/requirements.txt
+
+# The local Docker Compose stack
+!/local/
+!/local/docker-compose.yml
+!/local/.env.example
+!/local/gcx-token.sh
+!/local/loki.yaml
+!/local/prometheus.yml
+!/local/tempo.yaml
+!/local/grafana/
+!/local/grafana/dashboards/
+!/local/grafana/dashboards/*.json
+!/local/grafana/provisioning/
+!/local/grafana/provisioning/dashboards/
+!/local/grafana/provisioning/dashboards/*.yaml
+!/local/grafana/provisioning/datasources/
+!/local/grafana/provisioning/datasources/*.yaml
+!/local/loader/
+!/local/loader/Dockerfile
+!/local/loader/Dockerfile.dockerignore
+
+# Never, wherever they are: your settings, credentials, keys, caches and OS litter.
+# (These come last so they win over the allowlist above. local/.env.example is a template and stays.)
+.env
+.env.*
+!.env.example
+*.env.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.token
+gcx-token
+__pycache__/
+*.pyc
+.DS_Store

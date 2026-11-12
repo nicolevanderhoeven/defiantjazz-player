@@ -1,0 +1,57 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  allow_structured_metadata: true
+  # The case data is historical (or time-shifted); accept old entries.
+  reject_old_samples: false
+  ingestion_rate_mb: 64
+  ingestion_burst_size_mb: 128
+  max_query_length: 0
+  max_query_series: 10000
+  otlp_config:
+    resource_attributes:
+      attributes_config:
+        - action: index_label
+          attributes: [service.name, service.namespace]
+
+ingester:
+  # The case is loaded in a burst, with old timestamps, and Loki only finds old lines once it has flushed them
+  # out of the ingester. Flush soon after the load goes quiet (the defaults wait half an hour).
+  chunk_idle_period: 30s
+  flush_check_period: 10s
+  wal:
+    # Loki's default (0.9) makes the ingester refuse every write ("Ingester is shutting down", HTTP 500/503) while
+    # the disk holding its write-ahead log is more than 90% full. On a laptop that is the Docker VM's disk, which
+    # is routinely that full, and it has nothing to do with the few MB this stack stores. 0 turns that guard off;
+    # a disk that really is full still fails the writes, with the disk's own error.
+    disk_full_threshold: 0
+
+pattern_ingester:
+  enabled: false
+
+analytics:
+  reporting_enabled: false

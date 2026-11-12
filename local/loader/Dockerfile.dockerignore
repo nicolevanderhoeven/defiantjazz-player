@@ -1,0 +1,3 @@
+# Only the requirements file goes into the image; everything else is mounted when the loader runs.
+*
+!loader/requirements.txt

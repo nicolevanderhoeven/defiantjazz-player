@@ -1,0 +1,61 @@
+=== PERSONNEL (sleepwalkers; waking-life data restricted to HR) ===
+personnel id=agnes name="Agnes Tanaka" dept="Deep Sleep Operations" preferred_name="Peggy" tenure_years=9
+personnel id=bertram name="Bertram Mensah" dept="Deep Sleep Operations" preferred_name="" tenure_years=4
+personnel id=clement name="Clement Whitlow" dept="Deep Sleep Operations" preferred_name="" tenure_years=5
+personnel id=hale name="Mr. Hale" role="Night Supervisor" sleepwalker=false
+
+=== DETENTION RECORDS (current quarter) ===
+2026-08-12T02:19:06 detention employee=agnes ordered_by=hale reason="insubordination" lines_written="31"
+2026-09-16T23:13:54 detention employee=agnes ordered_by=hale reason="insubordination" lines_written="20"
+2026-08-25T01:59:09 detention employee=agnes ordered_by=hale reason="insubordination" lines_written="23"
+2026-09-29T03:04:24 detention employee=agnes ordered_by=hale reason="unauthorized movement" lines_written="18"
+2026-08-31T03:45:51 detention employee=agnes ordered_by=hale reason="repeat offense" lines_written="9"
+2026-09-01T00:34:09 detention employee=agnes ordered_by=hale reason="insubordination" lines_written="19"
+
+=== HUSH ROOM SESSION LOG (automated wellness notes) ===
+2026-08-24T00:36:40 hush-room employee=clement note="Reports recurring headaches, worse at the start of shift."
+2026-10-04T23:31:31 hush-room employee=bertram note="Reports headaches. Advised hydration."
+2026-08-05T23:52:42 hush-room employee=agnes note="Anxious. Asked twice where the elevator goes. Redirected."
+2026-08-07T02:13:19 hush-room employee=agnes note="Expressed resentment toward supervision. Advised gratitude."
+2026-07-14T00:18:47 hush-room employee=bertram note="No concerns. Bedtime story read."
+2026-07-24T00:24:31 hush-room employee=clement note="No concerns."
+
+=== SUPERVISOR FEEDBACK FORM (restricted) ===
+2026-09-30T02:20:45 supervisor-feedback submitted_by=bertram to=hale text="Agnes lingers in the elevator lobby."
+2026-10-06T03:40:31 supervisor-feedback submitted_by=bertram to=hale text="Agnes lingers in the elevator lobby again. Twice tonight."
+2026-10-07T20:47:22 supervisor-feedback submitted_by=bertram to=hale text="Agnes is leaving something in the elevator emergency phone panel. I think she's planning something at the elevator."
+2026-10-07T20:52:40 supervisor-feedback reply_by=hale to=bertram text="Thank you, Bertram. My office, 21:15."
+2026-09-29T04:05:00 supervisor-feedback reply_by=hale to=bertram text="Reward issued: 1x small kitchen appliance (off-ledger). Discretion appreciated."
+
+=== PERKS LEDGER ===
+2026-10-05T04:12:36 perk=cocoa-day recipient=clement
+2026-10-02T04:02:15 perk=eye-mask recipient=bertram
+2026-09-10T04:26:58 perk=eye-mask recipient=agnes
+2026-07-15T04:27:28 perk=cocoa-day recipient=bertram
+2026-10-06T04:05:16 perk=cocoa-day recipient=clement
+2026-10-07T04:08:11 perk=bed-socks recipient=agnes
+2026-08-17T04:25:12 perk=eye-mask recipient=agnes
+2026-09-22T04:20:09 perk=bed-socks recipient=bertram
+
+=== KEYSTROKE DRAFTS (unsent; flagged by sentiment filter) ===
+2026-10-02T02:12:09 keystrokes employee=agnes app=notes type=draft text="If Mr. Hale were gone, this floor could breathe." sent=false
+
+=== CALENDAR (night of 2026-10-07) ===
+2026-10-07T21:15:00 calendar owner=hale title="1:1 Bertram"
+2026-10-08T03:00:00 calendar owner=hale title="Cocoa Hour supervision (DSO holiday party)"
+
+=== COCOA HOUR SEATS (Facilities, Break Room 2; who sits where is on the chart posted in the room) ===
+2026-10-07T20:15:00 seating event=cocoa-hour room=break-room-2 seat=1 position="head of the table, by the cocoa urn"
+2026-10-07T20:15:00 seating event=cocoa-hour room=break-room-2 seat=2 position="chair by the window"
+2026-10-07T20:15:00 seating event=cocoa-hour room=break-room-2 seat=3 position="chair by the door"
+2026-10-07T20:15:00 seating event=cocoa-hour room=break-room-2 seat=4 position="chair by the speaker"
+
+=== COCOA HOUR FESTIVE-WEAR REGISTER (Facilities, logged at the Break Room 2 door) ===
+2026-10-08T02:58:40 festive-wear employee=agnes item="Christmas sweater" colours="green, red, orange, white, navy" pattern="stars and stripes"
+2026-10-08T02:58:52 festive-wear employee=bertram item="Christmas sweater" colours="blue, red, orange, white, green" pattern="reindeer and snowflakes"
+2026-10-08T02:59:05 festive-wear employee=clement item="Christmas sweater" colours="navy, blue, red, orange, green, white" pattern="stripes and squares"
+2026-10-08T02:59:30 festive-wear employee=hale item="charcoal suit jacket and tie" colours="charcoal" pattern=none
+
+=== PROCEDURE REVISION LOG ===
+procedure-revision id=114 title="Sleepwalker night-shift procedure, revision 114" status=approved approved_by=hale approved_in=February
+procedure-revision id=114 status=withdrawn withdrawn_in=March reason="following a sleepwalker fatality"
