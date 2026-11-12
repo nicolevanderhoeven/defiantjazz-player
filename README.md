@@ -28,40 +28,72 @@ Grafana, where the evidence lives, is at <http://localhost:3000>. Anyone on your
 
 ## 2. Connect your AI agent: pick ONE route
 
-Run one route's commands from the `local/` folder you're in. Each one gives your agent its instructions ([`agent-kit/AGENTS.md`](agent-kit/AGENTS.md)) in a new empty folder next to the repository. Save the file as `CLAUDE.md` for Claude Code, or `AGENTS.md` for Codex and many other agents.
+Run one route's steps from the `local/` folder you're in. Each route gives your agent its instructions ([`agent-kit/AGENTS.md`](agent-kit/AGENTS.md)) in a new empty folder next to the repository. Save the file as `CLAUDE.md` for Claude Code, or `AGENTS.md` for Codex and many other agents.
 
 **Route A: the Grafana MCP server** (Claude Code, Cursor, Codex and other agents that use MCP):
 
-```sh
-claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp
-docker compose logs loader | grep 'Incident night'
-mkdir ../../dj-agent
-cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
-cd ../../dj-agent
-claude
-```
+1. Add the server to your agent. In Claude Code, run:
 
-The second command prints the incident night's window: tell your agent that window. For another MCP agent, add an HTTP (streamable-http) server at `http://localhost:8000/mcp` instead of the first command, and start that agent in `dj-agent`.
+   ```sh
+   claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp
+   ```
+
+   In any other MCP agent, add an HTTP (streamable-http) server at `http://localhost:8000/mcp`.
+
+2. Make an empty folder for your agent and give it its instructions, so it starts with only its own instructions. Use `AGENTS.md` instead of `CLAUDE.md` for Codex:
+
+   ```sh
+   mkdir ../../dj-agent
+   cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
+   ```
+
+3. Print the time range of the incident night, which you'll give your agent so it searches the right hours. The case happened in the past, not now. From the `local/` folder, run:
+
+   ```sh
+   docker compose logs loader | grep 'Incident night'
+   ```
+
+4. Start your agent in that folder, then tell it the incident night's time range from step 3:
+
+   ```sh
+   cd ../../dj-agent
+   claude
+   ```
 
 **Route B: `gcx`** (a command line, for an agent in a terminal):
 
-```sh
-docker compose logs gcx-token
-gcx login dj-local --yes --server http://localhost:3000 --token <the token it printed>
-gcx datasources list
-mkdir ../../dj-agent
-cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
-cd ../../dj-agent
-claude
-```
+1. Print your login and the night of the incident. From the `local/` folder, run the command below. It prints two things: a `gcx login` line with a read-only token, which you'll run in step 2, and the time range of the incident night, which you'll give your agent so it searches the right hours. The case happened in the past, not now.
 
-The first command prints your login line (the one you paste as the second) and the incident night's window: tell your agent that window. `gcx datasources list` should show `loki`, `prometheus` and `tempo`.
+   ```sh
+   docker compose logs gcx-token
+   ```
+
+2. Log `gcx` in with the token from step 1, and check that it can see the data sources (`loki`, `prometheus` and `tempo`):
+
+   ```sh
+   gcx login dj-local --yes --server http://localhost:3000 --token <the token from step 1>
+   gcx datasources list
+   ```
+
+3. Make an empty folder for your agent and give it its instructions, so it starts with only its own instructions. Use `AGENTS.md` instead of `CLAUDE.md` for Codex:
+
+   ```sh
+   mkdir ../../dj-agent
+   cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
+   ```
+
+4. Start your agent in that folder, then tell it the incident night's time range from step 1:
+
+   ```sh
+   cd ../../dj-agent
+   claude
+   ```
 
 ## 3. Play
 
 Open the game in local mode: <https://nicolevanderhoeven.com/defiantjazz/?where=local>
 
-It tells the story, gives you example questions to put to your agent, and scores your accusation. Your agent investigates in the stack you just started; the game's commands and its Grafana Explore link point at `localhost`, so they use your own copy of the case. It expects the default ports (3000 for Grafana, 8000 for the MCP server). The game's first screen repeats the connect commands from step 2.
+It tells the story, gives you example questions to put to your agent, and scores your accusation. Your agent investigates in the stack you just started; the game's commands and its Grafana Explore link point at `localhost`, so they use your own copy of the case. It expects the default ports (3000 for Grafana, 8000 for the MCP server). The game's first screen repeats the connect commands from this section.
 
 ## 4. Stop
 
@@ -77,7 +109,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 - **A port is already taken?** Copy `local/.env.example` to `local/.env` and set `DJ_GRAFANA_PORT` or `DJ_MCP_PORT`. The game page and the commands above assume the defaults, so use your port wherever they show `3000` or `8000`. If you change the admin password in that file, do it before the first start.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
-- **The data's times are UTC.** The case is loaded with the incident on the most recent Thursday, so ask for the incident night's window (the commands above print it) rather than "the last 24 hours".
+- **The data's times are UTC.** The case is loaded with the incident on the most recent Thursday, so give your agent the incident night's time range (the commands above print it) rather than "the last 24 hours".
 
 ## What's in this repository
 
