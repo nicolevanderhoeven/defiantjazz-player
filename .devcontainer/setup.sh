@@ -38,7 +38,10 @@ if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOM
   echo "DJ_GRAFANA_ROOT_URL=https://${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}/" >>"$env_file"
 fi
 
-# Show the welcome note in every new terminal (start.sh writes it once the case is loaded).
-if ! grep -q 'dj-welcome' "$HOME/.bashrc" 2>/dev/null; then
-  echo '[ -f "$HOME/.dj-welcome" ] && cat "$HOME/.dj-welcome"' >>"$HOME/.bashrc"
+# dj-help prints the welcome note (start.sh writes it once the case is loaded), or says the case is still loading.
+sudo install -m 0755 "$repo_root/.devcontainer/dj-help.sh" /usr/local/bin/dj-help
+
+# A terminal opened before the case is ready says so, waits, and prints the note there as soon as it is written.
+if ! grep -q 'dj-help' "$HOME/.bashrc" 2>/dev/null; then
+  echo '[ -t 1 ] && dj-help --wait' >>"$HOME/.bashrc"
 fi
