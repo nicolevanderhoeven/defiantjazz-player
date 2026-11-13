@@ -8,6 +8,24 @@ You work out who did it. The evidence is **telemetry** (logs, metrics and traces
 
 This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and the Grafana MCP server, started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
 
+## Quickest start: Open in Codespaces
+
+No Docker or `gcx` on your machine? Run everything in the cloud with a GitHub Codespace, a ready-made development machine in your browser.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/nicolevanderhoeven/defiantjazz-player)
+
+1. Click the badge (or open <https://codespaces.new/nicolevanderhoeven/defiantjazz-player>), sign in to GitHub, and choose **Create codespace**. Keep the default 2-core machine.
+2. Wait about three minutes. The Codespace starts the stack, loads the case and logs `gcx` in for you. When it's ready, the terminal prints the time range of the incident night. Note the two times: your agent needs them to search the right hours.
+3. In that terminal, go to your agent's folder, which already holds its instructions: `cd ~/dj-agent`.
+4. Start your own AI agent there and give it the two times. Either let it run `gcx` commands (already logged in), or add the Grafana MCP server first. In Claude Code, run `claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp`. In Copilot CLI or any other agent, add the Grafana MCP server at `http://localhost:8000/mcp` in the agent's own MCP settings.
+5. To see the evidence yourself, open the **Ports** tab in the Codespace and click the link beside **Grafana** (port 3000). Ports 3000 and 8000 are private to your account.
+
+**What you still bring:** your own AI agent and its account or key. The Codespace doesn't include a free one. [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli) is already installed there and works with your own GitHub Copilot plan; run `/login` in it first. Claude Code, Codex and others need to be installed first (for example `npm install -g @anthropic-ai/claude-code`) and use their own sign-in or API key.
+
+**Cost:** a Codespace is billed to your GitHub account. Personal accounts include 120 free core-hours a month (60 hours on the 2-core machine), and an investigation takes an hour or two. Accounts that belong to an organization may not have free hours. A stopped Codespace still uses storage, so delete it from <https://github.com/codespaces> when you've finished.
+
+The rest of this page is the route on your own machine. The game's setup screen and its `localhost` links assume that route, so in a Codespace use the Ports tab link for Grafana.
+
 ## What you need
 
 - **Docker with Compose** (Docker Desktop, or Docker Engine with the Compose plugin). Nothing else: no Python.
