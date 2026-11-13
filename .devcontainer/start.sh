@@ -29,13 +29,25 @@ sleep 3
 tokenlog=$(docker compose logs --no-log-prefix gcx-token 2>/dev/null)
 window=$(printf '%s\n' "$tokenlog" | grep 'The incident night' | tail -1)
 
-# Hand the incident night's window to the agent: a marked section in its instruction files, replaced on every start.
-# If the window line is missing or unparseable, the files are left as they are.
+# Grafana's address: in a Codespace it is the forwarded port's URL, not localhost.
+in_codespace=no
+if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]; then
+  in_codespace=yes
+  grafana_url="https://${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}/"
+else
+  grafana_url="http://localhost:3000/"
+fi
+
+# Hand the incident night's window and Grafana's forwarded address to the agent: a marked section in its instruction
+# files, replaced on every start. If there is nothing to write (no parseable window, not in a Codespace), the files
+# are left as they are.
 win_from=$(printf '%s\n' "$window" | sed -n 's/.* from \([^ ,]*\) to .*/\1/p')
 win_to=$(printf '%s\n' "$window" | sed -n 's/.* to \([^ ,]*\),.*/\1/p')
 win_run=$(printf '%s\n' "$window" | sed -n 's/.*case_run="\([^"]*\)".*/\1/p')
+window_ok=no
+if [ -n "$win_from" ] && [ -n "$win_to" ] && [ -n "$win_run" ]; then window_ok=yes; fi
 window_written=no
-if [ -n "$win_from" ] && [ -n "$win_to" ] && [ -n "$win_run" ]; then
+if [ "$window_ok" = yes ] || [ "$in_codespace" = yes ]; then
   for f in "$HOME/dj-agent/AGENTS.md" "$HOME/dj-agent/CLAUDE.md"; do
     [ -f "$f" ] || continue
     tmp=$(mktemp)
@@ -45,12 +57,18 @@ if [ -n "$win_from" ] && [ -n "$win_to" ] && [ -n "$win_run" ]; then
       echo
       echo '<!-- dj-window:start -->'
       echo '## The incident night in this Codespace'
-      echo
-      echo "The Codespace already knows the window, so don't ask the player for it. Search from **$win_from** to **$win_to** (UTC), \`case_run=\"$win_run\"\`. Use that range for every query; a relative range such as \"the last 24 hours\" will miss the incident."
+      if [ "$window_ok" = yes ]; then
+        echo
+        echo "The Codespace already knows the window, so don't ask the player for it. Search from **$win_from** to **$win_to** (UTC), \`case_run=\"$win_run\"\`. Use that range for every query; a relative range such as \"the last 24 hours\" will miss the incident."
+      fi
+      if [ "$in_codespace" = yes ]; then
+        echo
+        echo "Grafana for this stack is at $grafana_url. Use that address in any Grafana or Explore links you give the player, never localhost: a localhost link opens nothing on the player's computer."
+      fi
       echo '<!-- dj-window:end -->'
     } >"$f"
     rm -f "$tmp"
-    window_written=yes
+    [ "$window_ok" = yes ] && window_written=yes
   done
 fi
 
@@ -62,12 +80,6 @@ if command -v gcx >/dev/null 2>&1 && [ -n "$token" ]; then
     gcx datasources list >/dev/null 2>&1; then
     gcx_ok=yes
   fi
-fi
-
-if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]; then
-  grafana_url="https://${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}/"
-else
-  grafana_url="http://localhost:3000/"
 fi
 
 {
@@ -125,6 +137,8 @@ fi
   echo "speaks MCP can use http://localhost:8000/mcp (see the README)."
   echo "The story and the scoring are in the game:"
   echo "  https://nicolevanderhoeven.com/defiantjazz/"
+  echo
+  echo "Type dj-help any time to show these steps again."
   echo
 } >"$welcome"
 cat "$welcome"

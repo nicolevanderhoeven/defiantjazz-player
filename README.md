@@ -15,7 +15,7 @@ No Docker or `gcx` on your machine? Run everything in the cloud with a GitHub Co
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/nicolevanderhoeven/defiantjazz-player)
 
 1. Click the badge (or open <https://codespaces.new/nicolevanderhoeven/defiantjazz-player>), sign in to GitHub, and choose **Create codespace**. Keep the default 2-core machine.
-2. Wait about three minutes. The Codespace starts the stack, loads the case and logs `gcx` in for you. When it's ready, the terminal prints a welcome note.
+2. Wait about three minutes. The Codespace starts the stack, loads the case and logs `gcx` in for you. A terminal opened before the case has loaded says so and prints the welcome note there as soon as it is ready. Type `dj-help` in the terminal any time to show the note again.
 3. In that terminal, go to your agent's folder, which already holds its instructions: `cd ~/dj-agent`.
 4. Install your own AI agent (see [Bring your own agent](#bring-your-own-agent) below), start it there. Either let it run `gcx` commands (already logged in), or add the Grafana MCP server first.
 5. To see the evidence yourself, open the **Ports** tab in the Codespace and click the link beside **Grafana** (port 3000). Ports 3000 and 8000 are private to your account.
