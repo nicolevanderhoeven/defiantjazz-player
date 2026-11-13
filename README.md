@@ -12,7 +12,7 @@ This repository holds the stack and the case data, and nothing else: Loki, Prome
 
 - **Docker with Compose** (Docker Desktop, or Docker Engine with the Compose plugin). Nothing else: no Python.
 - **Git**, to clone this repository.
-- **An AI agent** that can query Grafana, such as [Claude Code](https://docs.claude.com/en/docs/claude-code), Cursor or [Codex](https://github.com/openai/codex), with its own account or API key. It connects either through the Grafana MCP server (which the stack runs for you) or through [`gcx`](https://gra.fan/gcxrepo), Grafana's command line. No agent? You can still paste [`game/ai-evidence/case-bundle.md`](game/ai-evidence/case-bundle.md) into any chatbot and ask it questions.
+- **An AI agent** that can query Grafana, such as [Claude Code](https://docs.claude.com/en/docs/claude-code), Cursor or [Codex](https://github.com/openai/codex), with its own account or API key. Step 2 explains the two ways to connect it, the Grafana MCP server or [`gcx`](https://gra.fan/gcxrepo), and helps you pick. No agent? You can still paste [`game/ai-evidence/case-bundle.md`](game/ai-evidence/case-bundle.md) into any chatbot and ask it questions.
 
 ## 1. Clone it and start the stack
 
@@ -28,9 +28,21 @@ Grafana, where the evidence lives, is at <http://localhost:3000>. Anyone on your
 
 ## 2. Connect your AI agent: pick ONE route
 
-Run one route's steps from the `local/` folder you're in. Each route gives your agent its instructions ([`agent-kit/AGENTS.md`](agent-kit/AGENTS.md)) in a new empty folder next to the repository. Save the file as `CLAUDE.md` for Claude Code, or `AGENTS.md` for Codex and many other agents.
+The evidence is in three Grafana data sources: Loki (logs), Prometheus (metrics) and Tempo (traces). Your agent needs a way to query them. Pick one:
 
-**Route A: the Grafana MCP server** (Claude Code, Cursor, Codex and other agents that use MCP):
+- **Route A: the Grafana MCP server.** MCP (Model Context Protocol) is a standard way to give an AI agent tools. The stack already runs a read-only Grafana MCP server, and you add it to your agent once. Pick this if your agent supports MCP, as Claude Code, Cursor and Codex do.
+- **Route B: `gcx`.** `gcx` is the command line for Grafana. Your agent runs `gcx` commands in your terminal to query the data sources. Pick this if your agent can run shell commands and you'd rather not use MCP.
+
+Both routes end by starting your agent in a new empty folder, so it works from the telemetry and not from this repository's files. Make that folder first, from the `local/` folder you're in. It goes next to the repository folder and holds only your agent's instructions ([`agent-kit/AGENTS.md`](agent-kit/AGENTS.md)), saved as `CLAUDE.md`, the file Claude Code reads. Use `AGENTS.md` instead for Codex and many other agents:
+
+```sh
+mkdir -p ../../dj-agent
+cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
+```
+
+Then follow one route's steps, running its commands from `local/` unless a step says otherwise.
+
+**Route A: the Grafana MCP server**
 
 1. Add the server to your agent. In Claude Code, run:
 
@@ -38,56 +50,61 @@ Run one route's steps from the `local/` folder you're in. Each route gives your 
    claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp
    ```
 
-   In any other MCP agent, add an HTTP (streamable-http) server at `http://localhost:8000/mcp`.
+   `--scope user` makes the server available from any folder, including your agent's folder. It needs no login or key. In another MCP agent, open its MCP settings and add an HTTP server (also called Streamable HTTP) at `http://localhost:8000/mcp`.
 
-2. Make an empty folder for your agent and give it its instructions, so it starts with only its own instructions. Use `AGENTS.md` instead of `CLAUDE.md` for Codex:
+2. Check that the agent can reach the server. In Claude Code, run `claude mcp list`. Success is a line like `grafana-local: http://localhost:8000/mcp (HTTP) - ✔ Connected`. If it says it failed, refer to [If a step fails](#if-a-step-fails).
 
-   ```sh
-   mkdir ../../dj-agent
-   cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
-   ```
-
-3. Print the time range of the incident night, which you'll give your agent so it searches the right hours. The case happened in the past, not now. From the `local/` folder, run:
+3. Print the time range of the incident night:
 
    ```sh
-   docker compose logs loader | grep 'Incident night'
+   docker compose logs --no-log-prefix loader | grep 'Incident night'
    ```
 
-4. Start your agent in that folder, then tell it the incident night's time range from step 3:
+   It prints a line like `Incident night: 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z`. Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, the loader is still working: wait a minute and run it again.
+
+4. Start your agent in its folder:
 
    ```sh
    cd ../../dj-agent
    claude
    ```
 
-**Route B: `gcx`** (a command line, for an agent in a terminal):
+   Use `codex` for Codex, or open the folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 3, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
-1. Print your login and the night of the incident. From the `local/` folder, run the command below. It prints two things: a `gcx login` line with a read-only token, which you'll run in step 2, and the time range of the incident night, which you'll give your agent so it searches the right hours. The case happened in the past, not now.
+**Route B: `gcx`**
+
+1. Check that `gcx` is installed by running `gcx --version`. If the command isn't found, install it. On macOS or Linux, run `brew install gcx`, or run the install script:
 
    ```sh
-   docker compose logs gcx-token
+   curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
    ```
 
-2. Log `gcx` in with the token from step 1, and check that it can see the data sources (`loki`, `prometheus` and `tempo`):
+   On Windows, or for other options, see the [`gcx` repository](https://gra.fan/gcxrepo). Run `gcx --version` again to confirm.
+
+2. Print the login line and the time range of the incident night:
 
    ```sh
-   gcx login dj-local --yes --server http://localhost:3000 --token <the token from step 1>
+   docker compose logs --no-log-prefix gcx-token
+   ```
+
+   It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line that starts `The incident night`, with two times. Note the times. The case happened in the past, so your agent needs them to search the right hours. The first run can take a minute while the stack finishes loading.
+
+3. Run the whole `gcx login` line from step 2, then check that `gcx` can see the data sources:
+
+   ```sh
    gcx datasources list
    ```
 
-3. Make an empty folder for your agent and give it its instructions, so it starts with only its own instructions. Use `AGENTS.md` instead of `CLAUDE.md` for Codex:
+   Success is a table with three rows: `loki`, `prometheus` and `tempo`. If you get an error or an empty table, refer to [If a step fails](#if-a-step-fails). Logging in adds a `dj-local` entry to the `gcx` settings and switches to it. If you use `gcx` for other Grafana instances, switch back later with `gcx config use-context <your earlier name>`.
 
-   ```sh
-   mkdir ../../dj-agent
-   cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
-   ```
-
-4. Start your agent in that folder, then tell it the incident night's time range from step 1:
+4. Start your agent in its folder:
 
    ```sh
    cd ../../dj-agent
    claude
    ```
+
+   Use `codex` for Codex, or open the folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 2, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 ## 3. Play
 
@@ -106,10 +123,15 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ## Good to know
 
-- **A port is already taken?** Copy `local/.env.example` to `local/.env` and set `DJ_GRAFANA_PORT` or `DJ_MCP_PORT`. The game page and the commands above assume the defaults, so use your port wherever they show `3000` or `8000`. If you change the admin password in that file, do it before the first start.
+- **A port is already taken?** In `local/`, create a `.env` file with a line for each port you want to change, for example `DJ_GRAFANA_PORT=3300` or `DJ_MCP_PORT=8300`, then run `docker compose up -d` again. Use your port wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses it. To also change the administrator password, copy `local/.env.example` to `local/.env` (a hidden file) and edit it before the first start.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
-- **The data's times are UTC.** The case is loaded with the incident on the most recent Thursday, so give your agent the incident night's time range (the commands above print it) rather than "the last 24 hours".
+
+### If a step fails
+
+- **A command prints nothing, or says it's waiting.** The loader, which fills the stack with the case, hasn't finished. Run `docker compose ps -a` and wait until `loader` shows `Exited (0)`, then run the command again.
+- **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `docker compose up -d`. If you changed a port, add the server again with your port.
+- **`gcx datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
 
 ## What's in this repository
 
@@ -117,6 +139,6 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 |---|---|
 | `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server and the `gcx` token helper. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
-| `loader/` | The small loader that puts the telemetry into the stack, shifted so the incident falls on the latest Thursday. |
+| `loader/` | The small loader that puts the telemetry into the stack. |
 | `agent-kit/` | The instructions your AI agent starts from. |
 | `game/ai-evidence/` | The case file for pasting into a chatbot. |
