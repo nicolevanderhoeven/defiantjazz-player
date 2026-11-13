@@ -57,10 +57,10 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 3. Print the time range of the incident night:
 
    ```sh
-   docker compose logs --no-log-prefix loader | grep 'Incident night'
+   docker compose logs --no-log-prefix gcx-token | grep 'The incident night'
    ```
 
-   It prints a line like `Incident night: 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run=2026-11-11`. Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, the loader is still working: wait a minute and run it again.
+   It prints a line like `The incident night (UTC): from 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run="2026-11-11".` Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, see the troubleshooting section below.
 
 4. Start your agent in its folder:
 
@@ -81,7 +81,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    docker compose logs --no-log-prefix gcx-token
    ```
 
-   It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line that starts `The incident night`, with two times. Note the times. The case happened in the past, so your agent needs them to search the right hours. The first run can take a minute while the stack finishes loading.
+   It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line like `The incident night (UTC): from <start> to <end>, case_run="...".`, with two times. Note the times. The case happened in the past, so your agent needs them to search the right hours. The first run can take a minute while the stack finishes loading.
 
 3. Run the whole `gcx login` line from step 2, then check that `gcx` can see the data sources:
 
@@ -123,7 +123,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ### If a step fails
 
-- **A command prints nothing, or says it's waiting.** The loader, which fills the stack with the case, hasn't finished. Run `docker compose ps -a` and wait until `loader` shows `Exited (0)`, then run the command again.
+- **A command prints nothing, or says it's waiting.** On a first start it can wait up to a few minutes for the loader, which fills the stack with the case. If it prints nothing, run `docker compose ps -a` until `loader` shows `Exited (0)`, then run the command again.
 - **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `docker compose up -d`. If you changed a port, add the server again with your port.
 - **`gcx datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
 
