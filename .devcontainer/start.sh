@@ -67,7 +67,7 @@ fi
   echo "  1. Start your own AI agent in the agent folder:  cd ~/dj-agent  (its instructions are already there)"
   echo "  2. Give it the time range above. It can use gcx or the MCP server."
   echo "       Claude Code:  claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp"
-  echo "       Copilot CLI:  copilot mcp add --transport http grafana-local http://localhost:8000/mcp"
+  echo "       Other agents: add the MCP server http://localhost:8000/mcp in the agent's own MCP settings"
   echo "     (gcx needs nothing more.) You bring the agent and its account or key."
   echo "  3. The story and the scoring are in the game: https://nicolevanderhoeven.com/defiantjazz/"
   echo
