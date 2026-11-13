@@ -6,7 +6,7 @@ set -uo pipefail
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 welcome="$HOME/.dj-welcome"
 export GCX_KEYCHAIN=off
-cd "$repo_root/local"
+cd "$repo_root/local" || exit 1
 
 rm -f "$welcome"
 echo "Starting the Defiant Jazz stack (the first start takes about two minutes)..."
