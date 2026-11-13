@@ -64,7 +64,8 @@ fi
   echo "Grafana MCP server:      http://localhost:8000/mcp (read-only)"
   echo
   echo "Next steps:"
-  echo "  1. Start your own AI agent in the agent folder:  cd ~/dj-agent  (its instructions are already there)"
+  echo "  1. Install and start your own AI agent in the agent folder:  cd ~/dj-agent  (its instructions are already there;"
+  echo "     no agent is preinstalled, see 'Bring your own agent' in the README)"
   echo "  2. Give it the time range above. It can use gcx or the MCP server."
   echo "       Claude Code:  claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp"
   echo "       Other agents: add the MCP server http://localhost:8000/mcp in the agent's own MCP settings"

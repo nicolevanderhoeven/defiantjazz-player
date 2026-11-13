@@ -42,8 +42,3 @@ fi
 if ! grep -q 'dj-welcome' "$HOME/.bashrc" 2>/dev/null; then
   echo '[ -f "$HOME/.dj-welcome" ] && cat "$HOME/.dj-welcome"' >>"$HOME/.bashrc"
 fi
-
-# Copilot CLI (needs the player's own Copilot plan). Not essential, so a failure here doesn't stop the setup.
-if ! command -v copilot >/dev/null 2>&1; then
-  npm install -g @github/copilot || echo "setup: could not install Copilot CLI; run 'npm install -g @github/copilot' yourself" >&2
-fi
