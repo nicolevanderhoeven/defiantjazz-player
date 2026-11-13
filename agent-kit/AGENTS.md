@@ -11,10 +11,12 @@ You are an investigator. The night supervisor of Kipsake's Sleep Floor was found
 
 ## Connect
 
+**Use the connection the player set up for this case: either the Grafana MCP server (`grafana-local`) or `gcx`. Don't switch to the other one on your own. Whenever you run `gcx`, add `--context dj-local`; never use another `gcx` context, which may point at a different Grafana. If neither works, ask the player which they set up instead of guessing.**
+
 You need one of these set up. If neither is, ask the player to set it up.
 
 - **Grafana MCP server** (read-only), Streamable HTTP at `http://localhost:8000/mcp`. Pass the data source UID to its tools (`query_loki_logs`, `query_prometheus`, `search_tempo_traces`, `get_tempo_trace`, and so on).
-- **`gcx`**, logged in to the local Grafana (`gcx datasources list` should list three data sources). The player gets the login line from `docker compose logs gcx-token` in the stack's `local/` folder.
+- **`gcx`**, logged in to the local Grafana (`gcx --context dj-local datasources list` should list three data sources). The player gets the login line from `docker compose logs gcx-token` in the stack's `local/` folder.
 
 If the player changed a port in `local/.env`, use theirs instead of `8000` or `3000`.
 
@@ -40,22 +42,26 @@ Use that window (or `case_run="<DATE>"`) for every query. The data is loaded wit
 
 ## Commands that work (`gcx`)
 
-Pass the data source UID with `-d`. Use `--from` and `--to` with the window above, not `--since`.
+Pass the data source UID with `-d` and always `--context dj-local`. Use `--from` and `--to` with the window above, not `--since`.
 
 ```sh
 # Logs (LogQL)
-gcx logs query -d loki '{service_namespace="kipsake-sleep-floor", service_name="door"}' --from <FROM> --to <TO> --limit 50 -o raw
+gcx logs query --context dj-local -d loki '{service_namespace="kipsake-sleep-floor", service_name="door"}' --from <FROM> --to <TO> --limit 50 -o raw
 
 # Log counts: a metric query over logs is `gcx logs metrics`
-gcx logs metrics -d loki 'sum by (service_name) (count_over_time({service_namespace="kipsake-sleep-floor"}[1h]))' --from <FROM> --to <TO> --step 1h
+gcx logs metrics --context dj-local -d loki 'sum by (service_name) (count_over_time({service_namespace="kipsake-sleep-floor"}[1h]))' --from <FROM> --to <TO> --step 1h
 
 # Metrics (PromQL)
-gcx metrics query -d prometheus 'max(circuit_power_watts{service_namespace="kipsake-sleep-floor"})' --from <FROM> --to <TO> --step 1m
+gcx metrics query --context dj-local -d prometheus 'max(circuit_power_watts{service_namespace="kipsake-sleep-floor"})' --from <FROM> --to <TO> --step 1m
 
 # Traces (TraceQL): leave out the time range, see below
-gcx traces query -d tempo '{ resource.service.name = "kipsake-badge-tracking" }' --limit 5
-gcx traces get -d tempo <trace id>
+gcx traces query --context dj-local -d tempo '{ resource.service.name = "kipsake-badge-tracking" }' --limit 5
+gcx traces get --context dj-local -d tempo <trace id>
 ```
+
+## The map
+
+If the player asks for a map or where people were, share this link to the Sleep Floor map: https://gra.fan/djmap. Don't mention the map otherwise.
 
 ## Quirks
 

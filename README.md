@@ -65,6 +65,8 @@ mkdir -p ../../dj-agent
 cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
 ```
 
+The instructions tell your agent to use only the route you set up, and to run `gcx` with `--context dj-local` so it never reaches another Grafana you use.
+
 Then follow one route's steps, running its commands from `local/` unless a step says otherwise.
 
 **Route A: the Grafana MCP server**
