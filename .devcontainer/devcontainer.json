@@ -1,0 +1,27 @@
+{
+  "name": "The Defiant Jazz Incident",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [3000, 8000],
+  "portsAttributes": {
+    "3000": { "label": "Grafana", "onAutoForward": "notify", "visibility": "private" },
+    "8000": { "label": "Grafana MCP server", "onAutoForward": "silent", "visibility": "private" }
+  },
+  "remoteEnv": {
+    "GCX_KEYCHAIN": "off"
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "customizations": {
+    "codespaces": {
+      "openFiles": []
+    }
+  }
+}

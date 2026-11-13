@@ -68,7 +68,7 @@ services:
       # Don't fetch the default drilldown apps from grafana.com on start-up.
       GF_PLUGINS_PREINSTALL_DISABLED: "true"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/kipsake-sleep-floor.json
-      GF_SERVER_ROOT_URL: http://localhost:${DJ_GRAFANA_PORT:-3000}/
+      GF_SERVER_ROOT_URL: ${DJ_GRAFANA_ROOT_URL:-http://localhost:${DJ_GRAFANA_PORT:-3000}/}
       # Grafana's own traces go to the local Tempo. Every query your agent runs through gcx or the MCP server is a
       # request to Grafana, so its trace carries the query (and the service account that sent it). Set it to an empty
       # value in local/.env (DJ_GRAFANA_TRACES=) to switch this off.
@@ -101,7 +101,7 @@ services:
       LOCAL_PROMETHEUS_OTLP: http://prometheus:9090/api/v1/otlp/v1/metrics
       LOCAL_TEMPO_OTLP: http://tempo:4318/v1/traces
       # Only used to print links you can open from your browser.
-      GRAFANA_URL: http://localhost:${DJ_GRAFANA_PORT:-3000}
+      GRAFANA_URL: ${DJ_GRAFANA_ROOT_URL:-http://localhost:${DJ_GRAFANA_PORT:-3000}/}
     command: ["--target", "local", "--incident-date", "latest", "--wait", "180", "--skip-if-loaded", "--window-file", "/window/case-window.json"]
     restart: "no"
     depends_on: [loki, prometheus, tempo]

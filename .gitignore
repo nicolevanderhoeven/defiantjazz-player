@@ -23,6 +23,11 @@
 !/loader/load.py
 !/loader/requirements.txt
 
+# The Codespaces setup (Open in Codespaces)
+!/.devcontainer/
+!/.devcontainer/devcontainer.json
+!/.devcontainer/*.sh
+
 # The local Docker Compose stack
 !/local/
 !/local/docker-compose.yml
