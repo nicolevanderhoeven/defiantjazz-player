@@ -30,7 +30,7 @@ The case holds about 14 weeks of ordinary nights and one incident night. Records
 
 ## The incident night
 
-Everything is UTC. The player gives you the window; it's printed by `docker compose logs gcx-token` and `docker compose logs loader`:
+Everything is UTC. If this file has an incident-night window section below, use that range and don't ask the player; otherwise the player gives you the window, which is printed by `docker compose logs gcx-token` and `docker compose logs loader`:
 
 ```
 Incident night: from <FROM> to <TO>, case_run="<DATE>"
