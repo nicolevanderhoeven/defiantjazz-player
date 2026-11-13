@@ -60,7 +60,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    docker compose logs --no-log-prefix loader | grep 'Incident night'
    ```
 
-   It prints a line like `Incident night: 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z`. Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, the loader is still working: wait a minute and run it again.
+   It prints a line like `Incident night: 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run=2026-11-11`. Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, the loader is still working: wait a minute and run it again.
 
 4. Start your agent in its folder:
 
@@ -73,13 +73,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
 **Route B: `gcx`**
 
-1. Check that `gcx` is installed by running `gcx --version`. If the command isn't found, install it. On macOS or Linux, run `brew install gcx`, or run the install script:
-
-   ```sh
-   curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
-   ```
-
-   On Windows, or for other options, see the [`gcx` repository](https://gra.fan/gcxrepo). Run `gcx --version` again to confirm.
+1. Check that `gcx` is installed by running `gcx --version`. If the command isn't found, install it. On macOS or Linux, run `brew install gcx`. For other systems or options, follow the install instructions in the [`gcx` repository](https://gra.fan/gcxrepo). Run `gcx --version` again to confirm.
 
 2. Print the login line and the time range of the incident night:
 
@@ -123,7 +117,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ## Good to know
 
-- **A port is already taken?** In `local/`, create a `.env` file with a line for each port you want to change, for example `DJ_GRAFANA_PORT=3300` or `DJ_MCP_PORT=8300`, then run `docker compose up -d` again. Use your port wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses it. To also change the administrator password, copy `local/.env.example` to `local/.env` (a hidden file) and edit it before the first start.
+- **A port is already taken?** In `local/`, copy `.env.example` to `.env` (a hidden file) if you don't have one yet. In that one `.env` file, set a line for each port you want to change, for example `DJ_GRAFANA_PORT=3300` or `DJ_MCP_PORT=8300`. The same file also holds the administrator password, if you want to change it before the first start. Then run `docker compose up -d` again. Use your port wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses it.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
 
