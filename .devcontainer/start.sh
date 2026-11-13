@@ -91,14 +91,33 @@ fi
   fi
   echo "Grafana MCP server:      http://localhost:8000/mcp (read-only)"
   echo
-  echo "Next steps:"
-  echo "  1. Install and start your own AI agent in the agent folder:  cd ~/dj-agent  (its instructions are already there;"
-  echo "     no agent is preinstalled, see 'Bring your own agent' in the README)"
-  echo "  2. It already knows the incident night's time range. It can use gcx or the MCP server."
-  echo "       Claude Code:  claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp"
-  echo "       Other agents: add the MCP server http://localhost:8000/mcp in the agent's own MCP settings"
-  echo "     (gcx needs nothing more.) You bring the agent and its account or key."
-  echo "  3. The story and the scoring are in the game: https://nicolevanderhoeven.com/defiantjazz/"
+  echo "Next steps: install ONE AI agent, then start it in the agent folder."
+  echo "Each needs your own account or key (Claude subscription or API key;"
+  echo "ChatGPT plan or API key; Copilot plan, including Free). You are"
+  echo "responsible for any costs of using it."
+  echo
+  echo "Claude Code:"
+  echo "  curl -fsSL https://claude.ai/install.sh | bash"
+  echo "  claude mcp add --scope user --transport http grafana-local \\"
+  echo "    http://localhost:8000/mcp"
+  echo "  cd ~/dj-agent && claude"
+  echo
+  echo "Codex:"
+  echo "  npm install -g @openai/codex"
+  echo "  cd ~/dj-agent && codex"
+  echo
+  echo "Copilot CLI:"
+  echo "  npm install -g @github/copilot"
+  echo "  mkdir -p ~/.copilot"
+  echo "  echo '{\"storeTokenPlaintext\": true}' > ~/.copilot/settings.json"
+  echo "  cd ~/dj-agent && copilot      (then type /login)"
+  echo "  copilot mcp add --transport http grafana-local \\"
+  echo "    http://localhost:8000/mcp"
+  echo
+  echo "gcx needs nothing more: it is already logged in. Any other agent that"
+  echo "speaks MCP can use http://localhost:8000/mcp (see the README)."
+  echo "The story and the scoring are in the game:"
+  echo "  https://nicolevanderhoeven.com/defiantjazz/"
   echo
 } >"$welcome"
 cat "$welcome"
