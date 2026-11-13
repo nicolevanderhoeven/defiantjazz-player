@@ -75,9 +75,16 @@ fi
   echo "=== The Defiant Jazz Incident ==="
   echo
   if [ -n "$window" ]; then
-    echo "$window"
+    if [ -n "$win_from" ] && [ -n "$win_to" ]; then
+      echo "The incident night (UTC):"
+      echo "  from $win_from"
+      echo "  to   $win_to"
+    else
+      echo "$window"
+    fi
     if [ "$window_written" = yes ]; then
-      echo "(Your agent's instructions in ~/dj-agent already include this range; there is nothing for you to do with it.)"
+      echo "Your agent's instructions in ~/dj-agent already include"
+      echo "this range; there is nothing for you to do with it."
     fi
   else
     echo "The incident night's time range isn't ready yet. Try: cd local && docker compose logs --no-log-prefix gcx-token | grep 'The incident night'"
