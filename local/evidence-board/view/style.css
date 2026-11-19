@@ -1,0 +1,61 @@
+/* The Defiant Jazz look: the game's dark-teal console, in light and dark hosts alike. These colour tokens are copied from
+   web/style.css (test/board.test.mjs fails if they drift). */
+:root {
+  --c-bg: #101b1d;
+  --c-panel: #142326;
+  --c-term: #0c1719;
+  --c-ink: #e8e4d3;
+  --c-muted: #9dada7;
+  --c-mint: #b7d4b4;
+  --c-line: #344442;
+  --c-line-soft: #243735;
+  --c-chip: #1a2b2b;
+  --c-chip-line: #40544b;
+  --c-peach: #efbb98;
+  --c-alert: #d0614f;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --serif: Georgia, "Times New Roman", serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--c-bg); color: var(--c-ink); }
+body { font: 14px/1.45 var(--mono); padding: 12px; }
+h1 { font: 600 20px/1.2 var(--serif); margin: 0; letter-spacing: .02em; color: var(--c-mint); }
+.board-sub { margin: 2px 0 10px; color: var(--c-muted); font-size: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--c-line); padding-bottom: 8px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.tab { background: var(--c-chip); border: 1px solid var(--c-chip-line); border-radius: 4px; padding: 4px 10px; }
+.tab[aria-selected="true"] { border-color: var(--c-mint); color: var(--c-mint); background: var(--c-term); }
+.count { color: var(--c-muted); font-size: 12px; }
+.tab[aria-selected="true"] .count { color: var(--c-mint); }
+button:focus-visible { outline: 2px solid var(--c-peach); outline-offset: 2px; }
+.filter { margin-top: 8px; }
+.filter[hidden] { display: none; }
+.chip { background: var(--c-chip); border: 1px solid var(--c-peach); color: var(--c-peach); border-radius: 12px; padding: 2px 10px; font-size: 12px; }
+.panel { margin-top: 10px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.list li { background: var(--c-panel); border: 1px solid var(--c-line-soft); border-radius: 4px; }
+.list li.hit { border-color: var(--c-peach); box-shadow: inset 3px 0 0 var(--c-peach); }
+.list li.dim { opacity: .45; }
+.row { display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; }
+.row:disabled { cursor: default; }
+.time { color: var(--c-peach); white-space: nowrap; }
+.text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.role { color: var(--c-muted); font-size: 12px; }
+.more { padding: 0 10px 8px; color: var(--c-muted); font-size: 13px; }
+.more p, .note { margin: 4px 0 0; overflow-wrap: anywhere; }
+.note { padding: 0 10px 8px; color: var(--c-muted); font-size: 13px; }
+.src { font-size: 12px; color: var(--c-muted); }
+.badge { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border: 1px solid var(--c-chip-line); border-radius: 3px; padding: 0 5px; white-space: nowrap; }
+.badge.solid { color: var(--c-mint); border-color: var(--c-mint); }
+.badge.likely { color: var(--c-peach); border-color: var(--c-peach); }
+.badge.unclear { color: var(--c-alert); border-color: var(--c-alert); }
+.q { padding: 8px 10px; overflow-wrap: anywhere; }
+.q::before { content: "? "; color: var(--c-peach); }
+.empty, .hint { color: var(--c-muted); font-size: 13px; }
+@media (max-width: 420px) { body { padding: 8px; } .row { flex-direction: column; gap: 2px; } }
+.scene { display: block; width: 100%; max-height: 240px; object-fit: cover; border: 1px solid var(--c-line); border-radius: 4px; margin-bottom: 8px; }
+.avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--c-chip-line); align-self: center; }
+.avatar.placeholder { display: inline-flex; align-items: center; justify-content: center; background: var(--c-chip); color: var(--c-muted); font-size: 13px; }
+.avatar.small { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; }
+.chip { display: inline-flex; align-items: center; }

@@ -52,6 +52,25 @@
 !/local/loader/Dockerfile
 !/local/loader/Dockerfile.dockerignore
 
+# The evidence board MCP App: its source, art and tests (not installed packages or the bundled view)
+!/local/evidence-board/
+!/local/evidence-board/.dockerignore
+!/local/evidence-board/Dockerfile
+!/local/evidence-board/README.md
+!/local/evidence-board/package.json
+!/local/evidence-board/package-lock.json
+!/local/evidence-board/*.mjs
+!/local/evidence-board/view/
+!/local/evidence-board/view/*.mjs
+!/local/evidence-board/view/*.html
+!/local/evidence-board/view/*.css
+!/local/evidence-board/view/art/
+!/local/evidence-board/view/art/*.webp
+!/local/evidence-board/test/
+!/local/evidence-board/test/*.mjs
+!/local/evidence-board/test/harness/
+!/local/evidence-board/test/harness/*.mjs
+
 # Never, wherever they are: your settings, credentials, keys, caches and OS litter.
 # (These come last so they win over the allowlist above. local/.env.example is a template and stays.)
 .env
@@ -65,5 +84,7 @@
 *.token
 gcx-token
 __pycache__/
+node_modules/
+dist/
 *.pyc
 .DS_Store

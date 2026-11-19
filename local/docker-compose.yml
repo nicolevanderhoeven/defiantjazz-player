@@ -7,11 +7,11 @@
 # Open Grafana at http://localhost:3000. Play the story in your browser at https://nicolevanderhoeven.com/defiantjazz/?where=local
 # Nothing here talks to Grafana Cloud.
 #
-# Only two ports are published on your machine, both bound to 127.0.0.1 so only this machine can reach them:
-# Grafana (3000) and the Grafana MCP server (8000). Loki, Prometheus and Tempo are reached over the stack's own
+# Only three ports are published on your machine, all bound to 127.0.0.1 so only this machine can reach them:
+# Grafana (3000), the Grafana MCP server (8000) and the evidence board (8001). Loki, Prometheus and Tempo are reached over the stack's own
 # network by Grafana, the MCP server and the loader, so they can't clash with anything else you run.
-# Start it with ./up.sh: if something else already uses 3000 or 8000, it picks free ports and saves them in
-# local/.env as DJ_GRAFANA_PORT, DJ_MCP_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
+# Start it with ./up.sh: if something else already uses 3000, 8000 or 8001, it picks free ports and saves them in
+# local/.env as DJ_GRAFANA_PORT, DJ_MCP_PORT, DJ_BOARD_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
 # Plain `docker compose up -d` does no port handling.
 # To reach Loki, Prometheus or Tempo from your own machine (for curl or `python loader/load.py --target local`),
 # add the file docker-compose.expose.yml: `docker compose -f docker-compose.yml -f docker-compose.expose.yml up -d`.
@@ -133,6 +133,15 @@ services:
     ports:
       - "127.0.0.1:${DJ_MCP_PORT:-8000}:8000"
     depends_on: [grafana]
+
+  # The evidence board: a small MCP App server next to the Grafana MCP server. Its one tool, show_evidence_board, draws what the
+  # investigating agent has found so far (timeline, clues, people, open questions) as an interactive board in chats whose app
+  # supports MCP Apps (Cursor does), and returns the same findings as text everywhere else. It shows only what the agent
+  # passes in and has no access to Grafana or to the case. Streamable HTTP at http://localhost:8001/mcp.
+  evidence-board:
+    build: ./evidence-board
+    ports:
+      - "127.0.0.1:${DJ_BOARD_PORT:-8001}:8001"
 
   # Creates a read-only (Viewer) Grafana service account and token for `gcx` and prints the `gcx login` line to paste,
   # so you don't have to click through Grafana's settings. It runs once and exits; a token it made earlier is kept

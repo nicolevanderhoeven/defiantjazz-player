@@ -19,7 +19,7 @@ case "$cmd" in
   version) exit 0 ;;
   port) [ -n "$STUB_OWNED_PORT" ] && echo "127.0.0.1:$STUB_OWNED_PORT" && exit 0; exit 1 ;;
   logs) [ -n "$STUB_LOGIN" ] && echo "  gcx login dj-local --yes --server http://localhost:$DJ_GRAFANA_PORT --token t0ken"; exit 0 ;;
-  up) echo "$orig; DJ_GRAFANA_PORT=$DJ_GRAFANA_PORT DJ_MCP_PORT=$DJ_MCP_PORT DJ_ASSISTANT_PORT=$DJ_ASSISTANT_PORT PROFILE=$STUB_PROFILE_SEEN" >>"$STUB_LOG"; exit "${STUB_UP_EXIT:-0}" ;;
+  up) echo "$orig; DJ_GRAFANA_PORT=$DJ_GRAFANA_PORT DJ_MCP_PORT=$DJ_MCP_PORT DJ_BOARD_PORT=$DJ_BOARD_PORT DJ_ASSISTANT_PORT=$DJ_ASSISTANT_PORT PROFILE=$STUB_PROFILE_SEEN" >>"$STUB_LOG"; exit "${STUB_UP_EXIT:-0}" ;;
 esac
 exit 0
 """
@@ -58,12 +58,13 @@ class UpScript(unittest.TestCase):
         shutil.copy(UP_SH, self.script)
         self.log = os.path.join(self.dir, "docker.log")
 
-    def run_up(self, grafana, mcp, login=True, up_exit=0, args=(), owned="", extra=None):
+    def run_up(self, grafana, mcp, board=None, login=True, up_exit=0, args=(), owned="", extra=None):
         env = dict(
             os.environ,
             PATH=self.bin + os.pathsep + os.environ["PATH"],
             DJ_GRAFANA_PORT=str(grafana),
             DJ_MCP_PORT=str(mcp),
+            DJ_BOARD_PORT=str(board or free_port()),
             DJ_UP_WAIT="0",
             STUB_LOG=self.log,
             STUB_UP_EXIT=str(up_exit),
@@ -104,6 +105,17 @@ class UpScript(unittest.TestCase):
         with open(self.log) as f:
             self.assertIn(f"DJ_GRAFANA_PORT={ng} DJ_MCP_PORT={nm}", f.read())
 
+    def test_a_busy_evidence_board_port_is_replaced_saved_and_printed(self):
+        g, m = free_port(), free_port()
+        with listener() as b:
+            r = self.run_up(g, m, board=b)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        nb = int(self.env_file()["DJ_BOARD_PORT"])
+        self.assertNotEqual(nb, b)
+        self.assertIn(f"http://localhost:{nb}/mcp", r.stdout)
+        with open(self.log) as f:
+            self.assertIn(f"DJ_BOARD_PORT={nb}", f.read())
+
     def test_saved_ports_are_reused_on_the_next_run(self):
         with listener() as g:
             m = free_port()
@@ -113,7 +125,7 @@ class UpScript(unittest.TestCase):
             r = subprocess.run(
                 ["bash", self.script],
                 env=dict(os.environ, PATH=self.bin + os.pathsep + os.environ["PATH"], DJ_UP_WAIT="0",
-                         STUB_LOG=self.log, STUB_LOGIN="1", DJ_MCP_PORT=str(m)),
+                         STUB_LOG=self.log, STUB_LOGIN="1", DJ_MCP_PORT=str(m), DJ_BOARD_PORT=str(free_port())),
                 capture_output=True, text=True, timeout=60,
             )
         self.assertEqual(r.returncode, 0, r.stderr)
