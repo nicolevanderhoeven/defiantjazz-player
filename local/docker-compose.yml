@@ -156,7 +156,7 @@ services:
     depends_on: [grafana]
 
   # Optional, and the only part that needs Grafana Cloud: a second Grafana with Grafana Assistant installed,
-  # at http://localhost:3001 (sign in as admin). Start it with `docker compose --profile assistant up -d`.
+  # at http://localhost:3001 (sign in as admin). Start it with `./up.sh --profile assistant` (it moves the port if 3001 is taken).
   # Assistant runs its AI backend in Grafana Cloud, so connect it to a Grafana Cloud stack once (see README).
   grafana-assistant:
     profiles: [assistant]

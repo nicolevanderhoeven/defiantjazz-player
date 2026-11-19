@@ -11,11 +11,15 @@ from contextlib import closing, contextmanager
 UP_SH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "up.sh")
 
 STUB = """#!/bin/sh
-case "$1 $2" in
-  "compose version") exit 0 ;;
-  "compose port") exit 1 ;;
-  "compose logs") [ -n "$STUB_LOGIN" ] && echo "  gcx login dj-local --yes --server http://localhost:$DJ_GRAFANA_PORT --token t0ken"; exit 0 ;;
-  "compose up") echo "up $*; DJ_GRAFANA_PORT=$DJ_GRAFANA_PORT DJ_MCP_PORT=$DJ_MCP_PORT" >>"$STUB_LOG"; exit "${STUB_UP_EXIT:-0}" ;;
+orig="$*"
+shift
+while [ "$1" = "--profile" ]; do shift 2; done
+cmd="$1"
+case "$cmd" in
+  version) exit 0 ;;
+  port) [ -n "$STUB_OWNED_PORT" ] && echo "127.0.0.1:$STUB_OWNED_PORT" && exit 0; exit 1 ;;
+  logs) [ -n "$STUB_LOGIN" ] && echo "  gcx login dj-local --yes --server http://localhost:$DJ_GRAFANA_PORT --token t0ken"; exit 0 ;;
+  up) echo "$orig; DJ_GRAFANA_PORT=$DJ_GRAFANA_PORT DJ_MCP_PORT=$DJ_MCP_PORT DJ_ASSISTANT_PORT=$DJ_ASSISTANT_PORT PROFILE=$STUB_PROFILE_SEEN" >>"$STUB_LOG"; exit "${STUB_UP_EXIT:-0}" ;;
 esac
 exit 0
 """
@@ -54,7 +58,7 @@ class UpScript(unittest.TestCase):
         shutil.copy(UP_SH, self.script)
         self.log = os.path.join(self.dir, "docker.log")
 
-    def run_up(self, grafana, mcp, login=True, up_exit=0):
+    def run_up(self, grafana, mcp, login=True, up_exit=0, args=(), owned="", extra=None):
         env = dict(
             os.environ,
             PATH=self.bin + os.pathsep + os.environ["PATH"],
@@ -64,8 +68,10 @@ class UpScript(unittest.TestCase):
             STUB_LOG=self.log,
             STUB_UP_EXIT=str(up_exit),
             STUB_LOGIN="1" if login else "",
+            STUB_OWNED_PORT=str(owned),
+            **(extra or {}),
         )
-        return subprocess.run(["bash", self.script], env=env, capture_output=True, text=True, timeout=60)
+        return subprocess.run(["bash", self.script, *args], env=env, capture_output=True, text=True, timeout=60)
 
     def env_file(self):
         path = os.path.join(self.stack, ".env")
@@ -130,6 +136,25 @@ class UpScript(unittest.TestCase):
         r = self.run_up(free_port(), free_port(), login=False)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("docker compose logs --no-log-prefix gcx-token", r.stdout)
+
+    def test_a_busy_port_held_by_this_stack_is_left_alone(self):
+        with listener() as g:
+            m = free_port()
+            r = self.run_up(g, m, owned=g)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(self.env_file(), {})
+        self.assertIn(f"http://localhost:{g}", r.stdout)
+
+    def test_assistant_profile_port_is_moved_when_busy(self):
+        with listener() as a:
+            r = self.run_up(free_port(), free_port(), args=("--profile", "assistant"), extra={"DJ_ASSISTANT_PORT": str(a)})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        moved = int(self.env_file()["DJ_ASSISTANT_PORT"])
+        self.assertNotEqual(moved, a)
+        with open(self.log) as f:
+            logged = f.read()
+        self.assertIn("compose --profile assistant up -d;", logged)
+        self.assertIn(f"DJ_ASSISTANT_PORT={moved}", logged)
 
     def test_compose_failure_is_reported(self):
         r = self.run_up(free_port(), free_port(), up_exit=3)
