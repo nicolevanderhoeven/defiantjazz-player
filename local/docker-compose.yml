@@ -82,8 +82,9 @@ services:
 
   # Loads the case into Loki, Prometheus and Tempo, then exits. It waits (up to five minutes) for them to be
   # ready, loads the whole history with the incident on the latest Thursday, and skips any signal that is already
-  # there, so `docker compose up -d` is safe to repeat: if it ever exits with an error, the next `up -d` runs it again. Loki, Prometheus and Tempo keep their data in volumes, so
-  # `docker compose down` keeps the case and `docker compose down -v` clears it (the next `up` loads it again).
+  # there, so `docker compose up -d` is safe to repeat: if it ever exits with an error, the next `up -d` runs it
+  # again. Loki, Prometheus and Tempo keep their data in volumes, so `docker compose down` keeps the case and
+  # `docker compose down -v` clears it (the next `up` loads it again).
   loader:
     build:
       context: ..
