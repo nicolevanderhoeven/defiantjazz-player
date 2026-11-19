@@ -45,8 +45,10 @@ The rest of this page is the route on your own machine. The game's setup screen 
 ```sh
 git clone https://github.com/nicolevanderhoeven/defiantjazz-player.git
 cd defiantjazz-player/local
-docker compose up -d
+./up.sh
 ```
+
+`./up.sh` is the way to start the stack. If another program already uses port 3000 (Grafana), 8000 (the MCP server) or 8001 (the evidence board), it picks a free port by itself, saves it in `local/.env` so the next run and your links stay the same, starts the stack, and prints the real addresses at the end: the Grafana URL, the MCP URL, the evidence board's URL and your `gcx login` line. Use those addresses wherever this guide says `localhost:3000` or `localhost:8000`. (Advanced: plain `docker compose up -d` also works, but it does no port handling, so a taken port leaves the stack half started.)
 
 The first start pulls the images and builds a small loader, then loads the case: about two minutes. `docker compose ps -a` shows the `loader` as `Exited (0)` once the case is in.
 
@@ -145,7 +147,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ## Good to know
 
-- **A port is already taken?** In `local/`, copy `.env.example` to `.env` (a hidden file) if you don't have one yet. In that one `.env` file, set a line for each port you want to change, for example `DJ_GRAFANA_PORT=3300` or `DJ_MCP_PORT=8300` (the evidence board's is `DJ_BOARD_PORT`, default 8001). The same file also holds the administrator password, if you want to change it before the first start. Then run `docker compose up -d` again. Use your port wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses it.
+- **A port is already taken?** You don't need to do anything: `./up.sh` notices, picks a free port (for example 3300 for Grafana, 8300 for the MCP server or 8301 for the evidence board), saves it in `local/.env` (a hidden file, which also holds the administrator password if you want to change it before the first start), and prints the addresses to use. Use them wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses your port. To go back to the defaults, delete the `DJ_*_PORT` lines from `local/.env`. Loki, Prometheus and Tempo aren't published, so they can't clash with anything; the optional `docker-compose.expose.yml` in `local/` publishes them if you want to reach them from your own machine.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
 
@@ -153,7 +155,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 The stack also runs a small MCP App server, the **evidence board**. Its one tool, `show_evidence_board`, takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an interactive case board in the chat: tabs, click a clue to expand it, click a person to highlight what mentions them. It shows only what the agent passes in. It has no access to Grafana or to the case, and it never shows a solution.
 
-- **Endpoint:** `http://localhost:8001/mcp` (streamable HTTP), reachable only from this machine. Port `8001`, or `DJ_BOARD_PORT` in `local/.env`. The first `docker compose up -d` builds it, which takes a minute.
+- **Endpoint:** `http://localhost:8001/mcp` (streamable HTTP), reachable only from this machine. Port `8001`; if something else uses it, `./up.sh` picks a free one (saved as `DJ_BOARD_PORT` in `local/.env`) and prints the board's address. The first `./up.sh` builds it, which takes a minute.
 - **Cursor** (2.6 or later, which supports [MCP Apps](https://cursor.com/changelog/2-6)): add it beside the Grafana server in `.cursor/mcp.json`:
 
   ```json
@@ -167,15 +169,16 @@ The stack also runs a small MCP App server, the **evidence board**. Its one tool
 
 ### If a step fails
 
+- **`docker compose up -d` says `address already in use`, or `port is already allocated`.** You started the stack without `./up.sh`, which does no port handling, and some of it didn't start. Run `./up.sh` in `local/`: it picks free ports and starts everything. Nothing else needs cleaning up.
 - **A command prints nothing, or says it's waiting.** On a first start it can wait up to a few minutes for the loader, which fills the stack with the case. If it prints nothing, run `docker compose ps -a` until `loader` shows `Exited (0)`, then run the command again.
-- **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `docker compose up -d`. If you changed a port, add the server again with your port.
+- **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `./up.sh`. If you changed a port, add the server again with your port.
 - **`gcx datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
 
 ## What's in this repository
 
 | Folder | What it holds |
 |---|---|
-| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server, the evidence board MCP App (`local/evidence-board/`) and the `gcx` token helper. |
+| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server, the evidence board MCP App (`local/evidence-board/`) and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
 | `agent-kit/` | The instructions your AI agent starts from. |
