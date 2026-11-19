@@ -6,7 +6,9 @@ Docker stack in ../local (Loki, Prometheus and Tempo each expose OTLP).
 
 Usage:
     python load.py --target cloud            # uses GRAFANA_OTLP_ENDPOINT etc. from the environment / .env
-    python load.py --target local            # sends to the docker compose stack on localhost
+    python load.py --target local            # sends to the docker compose stack on localhost (the stack's own loader
+                                             # does this inside Docker; from your machine, start the stack with
+                                             # local/docker-compose.expose.yml too, which publishes Loki, Prometheus and Tempo)
     python load.py --target local --incident-date latest   # the incident falls on the latest Thursday
     python load.py --target local --dry-run  # build and validate every payload without sending
 
@@ -672,7 +674,9 @@ def main():
         bases = local_bases()
         not_ready = wait_until_ready(bases, args.wait)
         if not_ready:
-            sys.exit(f"Not ready after {args.wait:g} s: {', '.join(not_ready)}. Is the local stack running (docker compose up -d)?")
+            sys.exit(f"Not ready after {args.wait:g} s: {', '.join(not_ready)}. Run `docker compose ps -a` to see whether "
+                     f"{'it is' if len(not_ready) == 1 else 'they are'} running, and `docker compose logs {' '.join(not_ready)}` "
+                     "for why not. Once they are up, `docker compose up -d` loads the case (it is safe to repeat).")
     if args.skip_if_loaded and not args.dry_run:
         have = loaded_signals(local_bases(), args.namespace)
         for signal in [w for w in wanted if w in have]:

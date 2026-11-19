@@ -1,0 +1,20 @@
+# Optional. Publishes Loki, Prometheus and Tempo on your own machine, for curl or for running the loader from your
+# own Python (`python loader/load.py --target local`). The stack doesn't need this: Grafana, the Grafana MCP server
+# and the loader reach them over the stack's own network, and leaving them unpublished means they can't clash with
+# another stack that already uses their ports. Use it by adding it to the usual command:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.expose.yml up -d
+#
+# Each port can be moved with DJ_LOKI_PORT, DJ_PROMETHEUS_PORT, DJ_TEMPO_PORT or DJ_OTLP_PORT (in local/.env).
+# If one is taken, `up` stops with "address already in use" and the port's number: move that one here.
+services:
+  loki:
+    ports:
+      - "127.0.0.1:${DJ_LOKI_PORT:-3100}:3100"
+  prometheus:
+    ports:
+      - "127.0.0.1:${DJ_PROMETHEUS_PORT:-9090}:9090"
+  tempo:
+    ports:
+      - "127.0.0.1:${DJ_TEMPO_PORT:-3200}:3200"
+      - "127.0.0.1:${DJ_OTLP_PORT:-4318}:4318"
