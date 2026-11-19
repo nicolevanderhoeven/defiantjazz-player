@@ -153,7 +153,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ### Evidence board (optional MCP App)
 
-The stack also runs a small MCP App server, the **evidence board**. Its one tool, `show_evidence_board`, takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an interactive case board in the chat: tabs, click a clue to expand it, click a person to highlight what mentions them. It shows only what the agent passes in. It has no access to Grafana or to the case, and it never shows a solution.
+The stack also runs a small MCP App server, the **evidence board**. Its one tool, `show_evidence_board`, takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an investigator's cork board in the chat, in two lanes: **From the telemetry** (what the agent found by querying the data) and **From your leads** (what you told the agent from the leads you opened in the game, which it can't see unless you say). Pin-up cards, red string from each person to what mentions them, click a clue to open it, click a person to light up their string. It shows only what the agent passes in. It has no access to Grafana or to the case, and it never shows a solution.
 
 - **Endpoint:** `http://localhost:8001/mcp` (streamable HTTP), reachable only from this machine. Port `8001`; if something else uses it, `./up.sh` picks a free one (saved as `DJ_BOARD_PORT` in `local/.env`) and prints the board's address. The first `./up.sh` builds it, which takes a minute.
 - **Cursor** (2.6 or later, which supports [MCP Apps](https://cursor.com/changelog/2-6)): add it beside the Grafana server in `.cursor/mcp.json`:
