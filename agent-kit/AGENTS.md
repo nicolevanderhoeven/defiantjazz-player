@@ -20,6 +20,8 @@ You need one of these set up. If neither is, ask the player to set it up.
 
 If the player changed a port in `local/.env`, use theirs instead of `8000` or `3000`.
 
+**If a query fails, or a data source is missing or empty, check the stack before you change anything.** In the stack's `local/` folder, run `docker compose ps -a`: `loki`, `prometheus`, `tempo`, `grafana` and `mcp-grafana` should be `running`, and `loader` and `gcx-token` should be `exited` with code 0. A message like "could not resolve loki" means the `loki` container isn't running (the stack's containers find each other by name), not a DNS problem. If something isn't running, `docker compose logs <service>` says why. The usual cause is a port the player's machine already uses; the fix is the line `./up.sh` prints for `local/.env`, then `./up.sh` again (it also loads the case if the loader hadn't finished). Don't edit the stack's files yourself; tell the player.
+
 ## What's where
 
 | Data source | UID | Holds |

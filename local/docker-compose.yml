@@ -1,15 +1,19 @@
 # The Defiant Jazz Incident, fully open source on your own machine.
 #
-#   docker compose up -d
+#   ./up.sh        (or: docker compose up -d)
 #
 # starts Loki, Prometheus, Tempo, Grafana and the Grafana MCP server, then loads the case into them
 # and prints a ready-to-paste `gcx login` line (`docker compose logs gcx-token`).
 # Open Grafana at http://localhost:3000. Play the story in your browser at https://nicolevanderhoeven.com/defiantjazz/?where=local
 # Nothing here talks to Grafana Cloud.
 #
-# Ports are bound to 127.0.0.1 so only this machine can reach them. Each can be moved with an environment
-# variable (or local/.env) if something else already uses it: DJ_GRAFANA_PORT, DJ_MCP_PORT,
-# DJ_LOKI_PORT, DJ_PROMETHEUS_PORT, DJ_TEMPO_PORT, DJ_OTLP_PORT and DJ_ASSISTANT_PORT.
+# Only two ports are published on your machine, both bound to 127.0.0.1 so only this machine can reach them:
+# Grafana (3000) and the Grafana MCP server (8000). Loki, Prometheus and Tempo are reached over the stack's own
+# network by Grafana, the MCP server and the loader, so they can't clash with anything else you run.
+# If something else already uses 3000 or 8000, ./up.sh says so before it starts anything and prints the line to
+# add to local/.env: DJ_GRAFANA_PORT, DJ_MCP_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
+# To reach Loki, Prometheus or Tempo from your own machine (for curl or `python loader/load.py --target local`),
+# add the file docker-compose.expose.yml: `docker compose -f docker-compose.yml -f docker-compose.expose.yml up -d`.
 name: defiantjazz
 
 x-grafana-no-phone-home: &grafana-no-phone-home
@@ -27,8 +31,6 @@ services:
     volumes:
       - ./loki.yaml:/etc/loki/loki.yaml:ro
       - loki-data:/loki
-    ports:
-      - "127.0.0.1:${DJ_LOKI_PORT:-3100}:3100"
 
   prometheus:
     image: prom/prometheus:v3.15.1
@@ -39,11 +41,9 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    ports:
-      - "127.0.0.1:${DJ_PROMETHEUS_PORT:-9090}:9090"
 
   tempo:
-    # Also takes OTLP over gRPC on 4317 inside the stack (not published): that's how the Grafana MCP server and Grafana
+    # Also takes OTLP over gRPC on 4317 inside the stack: that's how the Grafana MCP server and Grafana
     # send the traces of your agent's calls here (see local/tempo.yaml and "Watch your agent investigate" in the README).
     # 2.9, not 2.10: Tempo 2.10 can't search this case's historical traces (a search finds none, though a trace opens by its ID).
     image: grafana/tempo:2.9.5
@@ -51,9 +51,6 @@ services:
     volumes:
       - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo-data:/var/tempo
-    ports:
-      - "127.0.0.1:${DJ_TEMPO_PORT:-3200}:3200"
-      - "127.0.0.1:${DJ_OTLP_PORT:-4318}:4318"
 
   grafana:
     image: grafana/grafana:13.3.0
@@ -82,9 +79,9 @@ services:
       - "127.0.0.1:${DJ_GRAFANA_PORT:-3000}:3000"
     depends_on: [loki, prometheus, tempo]
 
-  # Loads the case into Loki, Prometheus and Tempo, then exits. It waits for them to be ready, loads the
-  # whole history with the incident on the latest Thursday, and skips any signal that is already there, so
-  # `docker compose up -d` is safe to repeat. Loki, Prometheus and Tempo keep their data in volumes, so
+  # Loads the case into Loki, Prometheus and Tempo, then exits. It waits (up to five minutes) for them to be
+  # ready, loads the whole history with the incident on the latest Thursday, and skips any signal that is already
+  # there, so `docker compose up -d` is safe to repeat: if it ever exits with an error, the next `up -d` runs it again. Loki, Prometheus and Tempo keep their data in volumes, so
   # `docker compose down` keeps the case and `docker compose down -v` clears it (the next `up` loads it again).
   loader:
     build:
@@ -102,7 +99,7 @@ services:
       LOCAL_TEMPO_OTLP: http://tempo:4318/v1/traces
       # Only used to print links you can open from your browser.
       GRAFANA_URL: ${DJ_GRAFANA_ROOT_URL:-http://localhost:${DJ_GRAFANA_PORT:-3000}/}
-    command: ["--target", "local", "--incident-date", "latest", "--wait", "180", "--skip-if-loaded", "--window-file", "/window/case-window.json"]
+    command: ["--target", "local", "--incident-date", "latest", "--wait", "300", "--skip-if-loaded", "--window-file", "/window/case-window.json"]
     restart: "no"
     depends_on: [loki, prometheus, tempo]
 

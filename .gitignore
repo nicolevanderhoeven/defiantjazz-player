@@ -31,6 +31,8 @@
 # The local Docker Compose stack
 !/local/
 !/local/docker-compose.yml
+!/local/docker-compose.expose.yml
+!/local/up.sh
 !/local/.env.example
 !/local/gcx-token.sh
 !/local/loki.yaml
