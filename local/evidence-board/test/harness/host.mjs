@@ -3,29 +3,42 @@
 // Run: node test/harness/serve.mjs  (needs the server: PORT=8001 node server.mjs), then open http://127.0.0.1:8099/
 import { AppBridge, PostMessageTransport } from "@modelcontextprotocol/ext-apps/app-bridge";
 
+const params = new URLSearchParams(location.search);
 const SAMPLE = {
-  title: "Cocoa Hour power cut: Break Room 2 (sample data)",
-  scene: new URLSearchParams(location.search).get("scene") ?? "break-room",
+  title: "Sample board (sample data)",
+  scene: params.get("scene") ?? "break-room",
+  scenes: (params.get("scenes") ?? "power-cut,break-room-camera,flyer").split(",").filter(Boolean),
   timeline: [
-    { time: "03:02:00Z", event: "Power cut starts on the Sleep Floor", source: "loki power" },
-    { time: "02:45:10Z", event: "Cocoa Hour begins in Break Room 2", source: "loki door" },
-    { time: "03:07:00Z", event: "Power restored after five minutes", source: "prometheus circuit_power_watts" },
-    { time: "03:02:20Z", event: "Badge 3 uploads buffered readings late", source: "ingested_at" },
-    { time: "03:03:00Z", event: "Agnes badges out of Break Room 2", source: "loki door" },
+    { time: "03:02:00Z", event: "Sample event 1 involving Sample person A", source: "sample source" },
+    { time: "02:45:10Z", event: "Sample event 2", source: "sample source" },
+    { time: "03:07:00Z", event: "Sample event 3 near Sample person B", source: "sample source" },
+    { time: "03:03:00Z", event: "Sample event 4 with Sample person A and Sample person C", source: "sample source" },
+    { time: "02:58:00Z", event: "Sample lead event 1 about Sample person B", source: "the player's lead", origin: "lead" },
+    { time: "03:10:00Z", event: "Sample lead event 2", source: "the player's lead", origin: "lead" },
   ],
   clues: [
-    { title: "Door reader silent during the outage", detail: "No door events between 03:02 and 03:07.", source: "loki door", confidence: "solid" },
-    { title: "Buffered badge samples", detail: "Samples recorded in the dark arrive after power returns.", source: "buffered=true", confidence: "likely" },
-    { title: "Badge 3 moved during the cut", confidence: "unclear" },
+    { title: "Sample clue 1", detail: "Sample detail.", source: "sample source", confidence: "solid" },
+    { title: "Sample clue 2 about Sample person C", detail: "Sample detail.", source: "sample source", confidence: "likely" },
+    { title: "Sample clue 3", confidence: "unclear" },
+    { title: "Sample lead clue about Sample person A", detail: "Sample detail from a lead.", source: "the player's lead", confidence: "likely", origin: "lead" },
+    { title: "Sample lead clue 2", confidence: "unclear", origin: "lead" },
   ],
   people: [
-    { name: "Agnes", role: "Sample person", note: "Sample note: Agnes appears in the sample timeline." },
-    { name: "Bertram", role: "Sample person" },
-    { name: "Clement", role: "Sample person" },
-    { name: "Badge 5", role: "Night shift", note: "No portrait, so initials." },
+    { name: "Sample person A", role: "Sample role", note: "Sample note." },
+    { name: "Sample person B", role: "Sample role" },
+    { name: "Sample person C", role: "Sample role" },
+    { name: "Sample person D", role: "Sample role", note: "No portrait, so initials." },
+    { name: "Sample person E", role: "Named in a lead", note: "Sample note: only a lead mentions them.", origin: "lead" },
   ],
-  questions: ["Who was in Break Room 2 at 03:02?", "Why did the door reader go silent?"],
+  questions: ["Sample question 1?", "Sample question 2?"],
 };
+if (params.get("many")) {
+  for (let i = 0; i < 24; i++) {
+    SAMPLE.timeline.push({ time: `03:${String(10 + i).padStart(2, "0")}:00Z`, event: `Sample event ${i + 1}${i % 3 === 0 ? " involving Sample person A" : i % 3 === 1 ? " near Sample person B" : ""}`, source: "loki sample" });
+    SAMPLE.clues.push({ title: `Sample clue ${i + 1}${i % 4 === 0 ? " about Sample person C" : ""}`, detail: "A longer sample detail so the card has something to open.", confidence: ["solid", "likely", "unclear"][i % 3] });
+  }
+  for (const n of ["Dana", "Eli", "Fenn", "Gus", "Hana"]) SAMPLE.people.push({ name: n, role: "Sample person" });
+}
 
 const frame = document.getElementById("view");
 const { result } = await (
@@ -36,7 +49,7 @@ const { result } = await (
   }).then(async (r) => JSON.parse((await r.text()).split("\n").find((l) => l.startsWith("data:")).slice(5)))
 );
 const bridge = new AppBridge(null, { name: "harness-host", version: "1.0.0" }, { serverTools: {} }, {
-  hostContext: { theme: new URLSearchParams(location.search).get("theme") ?? "light", displayMode: "inline", platform: "web" },
+  hostContext: { theme: params.get("theme") ?? "light", displayMode: "inline", platform: "web" },
 });
 bridge.oninitialized = () => {
   bridge.sendToolInput({ arguments: SAMPLE });
