@@ -47,7 +47,7 @@ cd defiantjazz-player/local
 ./up.sh
 ```
 
-`./up.sh` first checks that the ports the stack uses on your machine (3000 for Grafana, 8000 for the MCP server) are free, then runs `docker compose up -d`. If another program already uses one, it starts nothing and prints the line to add to `local/.env`; see "A port is already taken?" below. (Plain `docker compose up -d` works too, if you'd rather skip the check or don't have a Bash shell.)
+`./up.sh` is the way to start the stack. If another program already uses port 3000 (Grafana) or 8000 (the MCP server), it picks a free port by itself, saves it in `local/.env` so the next run and your links stay the same, starts the stack, and prints the real addresses at the end: the Grafana URL, the MCP URL and your `gcx login` line. Use those addresses wherever this guide says `localhost:3000` or `localhost:8000`. (Advanced: plain `docker compose up -d` also works, but it does no port handling, so a taken port leaves the stack half started.)
 
 The first start pulls the images and builds a small loader, then loads the case: about two minutes. `docker compose ps -a` shows the `loader` as `Exited (0)` once the case is in.
 
@@ -146,13 +146,13 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ## Good to know
 
-- **A port is already taken?** The stack publishes only two ports on your machine: 3000 (Grafana) and 8000 (the MCP server). If another program uses one, `./up.sh` starts nothing and prints the line to add, for example `DJ_GRAFANA_PORT=3300` or `DJ_MCP_PORT=8300`. In `local/`, copy `.env.example` to `.env` (a hidden file) if you don't have one yet and add that line to it. The same file also holds the administrator password, if you want to change it before the first start. Then run `./up.sh` again. Use your port wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses it. Loki, Prometheus and Tempo aren't published, so they can't clash with anything; the optional `docker-compose.expose.yml` in `local/` publishes them if you want to reach them from your own machine.
+- **A port is already taken?** You don't need to do anything: `./up.sh` notices, picks a free port (for example 3300 for Grafana or 8300 for the MCP server), saves it in `local/.env` (a hidden file, which also holds the administrator password if you want to change it before the first start), and prints the addresses to use. Use them wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses your port. To go back to the defaults, delete the `DJ_*_PORT` lines from `local/.env`. Loki, Prometheus and Tempo aren't published, so they can't clash with anything; the optional `docker-compose.expose.yml` in `local/` publishes them if you want to reach them from your own machine.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
 
 ### If a step fails
 
-- **`docker compose up -d` says `address already in use`, or `port is already allocated`.** Another program uses a port the stack needs, and the stack didn't start. The message names the port: 3000 is `DJ_GRAFANA_PORT`, 8000 is `DJ_MCP_PORT`. Add that line with a free port to `local/.env`, as in "A port is already taken?" above, and run `./up.sh` again. Nothing else needs cleaning up.
+- **`docker compose up -d` says `address already in use`, or `port is already allocated`.** You started the stack without `./up.sh`, which does no port handling, and some of it didn't start. Run `./up.sh` in `local/`: it picks free ports and starts everything. Nothing else needs cleaning up.
 - **A command prints nothing, or says it's waiting.** On a first start it can wait up to a few minutes for the loader, which fills the stack with the case. If it prints nothing, run `docker compose ps -a` until `loader` shows `Exited (0)`, then run the command again.
 - **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `./up.sh`. If you changed a port, add the server again with your port.
 - **`gcx datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
@@ -161,7 +161,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 | Folder | What it holds |
 |---|---|
-| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server and the `gcx` token helper. `up.sh` starts it after checking that its ports are free. |
+| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
 | `agent-kit/` | The instructions your AI agent starts from. |

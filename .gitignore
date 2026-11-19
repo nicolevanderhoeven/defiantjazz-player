@@ -33,6 +33,8 @@
 !/local/docker-compose.yml
 !/local/docker-compose.expose.yml
 !/local/up.sh
+!/local/tests/
+!/local/tests/*.py
 !/local/.env.example
 !/local/gcx-token.sh
 !/local/loki.yaml

@@ -10,8 +10,9 @@
 # Only two ports are published on your machine, both bound to 127.0.0.1 so only this machine can reach them:
 # Grafana (3000) and the Grafana MCP server (8000). Loki, Prometheus and Tempo are reached over the stack's own
 # network by Grafana, the MCP server and the loader, so they can't clash with anything else you run.
-# If something else already uses 3000 or 8000, ./up.sh says so before it starts anything and prints the line to
-# add to local/.env: DJ_GRAFANA_PORT, DJ_MCP_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
+# Start it with ./up.sh: if something else already uses 3000 or 8000, it picks free ports and saves them in
+# local/.env as DJ_GRAFANA_PORT, DJ_MCP_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
+# Plain `docker compose up -d` does no port handling.
 # To reach Loki, Prometheus or Tempo from your own machine (for curl or `python loader/load.py --target local`),
 # add the file docker-compose.expose.yml: `docker compose -f docker-compose.yml -f docker-compose.expose.yml up -d`.
 name: defiantjazz
