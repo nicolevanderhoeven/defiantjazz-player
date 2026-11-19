@@ -6,7 +6,7 @@ Kipsake rents your sleep: at night its Dreamers sleep in pods while their sleepw
 
 You work out who did it. The evidence is **telemetry** (logs, metrics and traces) loaded into a Grafana stack on your own machine, and you investigate it with your own AI agent. The story, the leads and the scoring are in the game's web page; this repository is the evidence and the stack that serves it.
 
-This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and the Grafana MCP server and an optional evidence board, started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
+This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and the Grafana MCP server and an optional evidence board (see [Evidence board](#evidence-board-optional-mcp-app)), started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
 
 ## Quickest start: Open in Codespaces
 
