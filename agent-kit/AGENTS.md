@@ -20,6 +20,8 @@ You need one of these set up. If neither is, ask the player to set it up.
 
 If the player changed a port in `local/.env`, use theirs instead of `8000` or `3000`.
 
+**Evidence board** (optional, MCP server `defiantjazz-board`, `http://localhost:8001/mcp`). If you have a `show_evidence_board` tool, call it when you report: pass the timeline, clues (with how sure you are), people and open questions you have found so far, each with where you saw it. The player sees it as an interactive board in the chat. It shows only what you pass in, and it is not evidence: it knows nothing about the case. Put guesses in open questions, not in clues. For the Cocoa Hour case, pass `scene: "break-room"` to show the Break Room in the board's header. If you don't have the tool, ignore this.
+
 ## What's where
 
 | Data source | UID | Holds |

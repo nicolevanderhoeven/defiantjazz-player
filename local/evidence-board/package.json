@@ -1,0 +1,27 @@
+{
+  "name": "defiantjazz-evidence-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MCP App for the Defiant Jazz local stack: draws the investigating agent's case board in chat. Shows only what the agent passes in.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node server.mjs",
+    "test": "node build.mjs && node --test test/board.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/core": "2.4.0",
+    "@modelcontextprotocol/ext-apps": "2.0.4",
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jsdom": "31.0.1"
+  }
+}

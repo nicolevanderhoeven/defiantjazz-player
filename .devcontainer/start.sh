@@ -109,6 +109,7 @@ fi
     echo "gcx:                     not logged in; run 'bash .devcontainer/start.sh' again, or see the README"
   fi
   echo "Grafana MCP server:      http://localhost:8000/mcp (read-only)"
+  echo "Evidence board (optional): http://localhost:8001/mcp (MCP App; see the README)"
   echo
   echo "Next steps: install ONE AI agent, then start it in the agent folder."
   echo "Each needs your own account or key (Claude subscription or API key;"
@@ -132,6 +133,11 @@ fi
   echo "  cd ~/dj-agent && copilot      (then type /login)"
   echo "  copilot mcp add --transport http grafana-local \\"
   echo "    http://localhost:8000/mcp"
+  echo
+  echo "Optional evidence board: add http://localhost:8001/mcp as a second MCP"
+  echo "server (name it defiantjazz-board) and ask your agent to put what it has"
+  echo "found on the evidence board. An agent whose chat can't draw it gets the"
+  echo "same findings as text."
   echo
   echo "gcx needs nothing more: it is already logged in. Any other agent that"
   echo "speaks MCP can use http://localhost:8000/mcp (see the README)."

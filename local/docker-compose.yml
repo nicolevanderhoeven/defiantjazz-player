@@ -9,7 +9,7 @@
 #
 # Ports are bound to 127.0.0.1 so only this machine can reach them. Each can be moved with an environment
 # variable (or local/.env) if something else already uses it: DJ_GRAFANA_PORT, DJ_MCP_PORT,
-# DJ_LOKI_PORT, DJ_PROMETHEUS_PORT, DJ_TEMPO_PORT, DJ_OTLP_PORT and DJ_ASSISTANT_PORT.
+# DJ_BOARD_PORT, DJ_LOKI_PORT, DJ_PROMETHEUS_PORT, DJ_TEMPO_PORT, DJ_OTLP_PORT and DJ_ASSISTANT_PORT.
 name: defiantjazz
 
 x-grafana-no-phone-home: &grafana-no-phone-home
@@ -134,6 +134,15 @@ services:
     ports:
       - "127.0.0.1:${DJ_MCP_PORT:-8000}:8000"
     depends_on: [grafana]
+
+  # The evidence board: a small MCP App server next to the Grafana MCP server. Its one tool, show_evidence_board, draws what the
+  # investigating agent has found so far (timeline, clues, people, open questions) as an interactive board in chats whose app
+  # supports MCP Apps (Cursor does), and returns the same findings as text everywhere else. It shows only what the agent
+  # passes in and has no access to Grafana or to the case. Streamable HTTP at http://localhost:8001/mcp.
+  evidence-board:
+    build: ./evidence-board
+    ports:
+      - "127.0.0.1:${DJ_BOARD_PORT:-8001}:8001"
 
   # Creates a read-only (Viewer) Grafana service account and token for `gcx` and prints the `gcx login` line to paste,
   # so you don't have to click through Grafana's settings. It runs once and exits; a token it made earlier is kept
