@@ -85,7 +85,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    docker compose logs --no-log-prefix gcx-token | grep 'The incident night'
    ```
 
-   It prints a line like `The incident night (UTC): from 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run="2026-11-11".` Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, see the troubleshooting section below.
+   It prints a line like `The incident night (UTC): from 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run="2026-11-11".` The case happened in the past, so a relative time range finds nothing; your agent works out the night itself, and this line only confirms the stack loaded the case. If nothing prints, see the troubleshooting section below.
 
 4. Start your agent in the folder you cloned (this repository), not a new empty folder:
 
@@ -96,7 +96,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
    Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
 
-   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 3, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
+   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then type `Start the Defiant Jazz case.` Your agent finds the incident night itself, so you don't need to give it the times. To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 **Route B: `gcx`**
 
@@ -108,7 +108,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    docker compose logs --no-log-prefix gcx-token
    ```
 
-   It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line like `The incident night (UTC): from <start> to <end>, case_run="...".`, with two times. Note the times. The case happened in the past, so your agent needs them to search the right hours. The first run can take a minute while the stack finishes loading.
+   It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line like `The incident night (UTC): from <start> to <end>, case_run="...".` The case happened in the past, so a relative time range finds nothing; your agent works out the night itself. The first run can take a minute while the stack finishes loading.
 
 3. Run the whole `gcx login` line from step 2, then check that `gcx` can see the data sources:
 
@@ -127,7 +127,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
    Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
 
-   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 2, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
+   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then type `Start the Defiant Jazz case.` Your agent finds the incident night itself, so you don't need to give it the times. To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 ## 3. Play
 
