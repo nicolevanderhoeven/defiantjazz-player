@@ -43,6 +43,7 @@ export function readCaseWindow(path = WINDOW_FILE) {
     to: file.end,
     incident_at: `${file.case_run}T${INCIDENT_TIME}`,
     namespace,
+    // case_run is Loki structured metadata, not a logfmt field in the line, so no `| logfmt` stage is needed.
     logql_selector: `{service_namespace="${namespace}"} | case_run="${file.case_run}"`,
     ...(typeof file.loaded_at === "string" ? { loaded_at: file.loaded_at } : {}),
     note: "All times are UTC. Use from/to (or case_run) for every query; relative ranges such as 'last 24h' will not find the incident.",

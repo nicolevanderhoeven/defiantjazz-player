@@ -73,6 +73,14 @@ test("with the file present it returns the window as text and as structured cont
   assert.match(w.note, /UTC/);
 });
 
+test("the LogQL selector is a service_namespace stream selector then a case_run structured-metadata filter, with no logfmt stage", () => {
+  writeFileSync(file, JSON.stringify({ ...GOOD, case_run: "2026-12-03", namespace: "ns-x" }));
+  const r = readCaseWindow(file);
+  assert.ok(r.ok);
+  assert.equal(r.window.logql_selector, '{service_namespace="ns-x"} | case_run="2026-12-03"');
+  assert.ok(!r.window.logql_selector.includes("logfmt"));
+});
+
 test("the file is read on every call, so a later load shows up", async () => {
   writeFileSync(file, JSON.stringify({ ...GOOD, case_run: "2026-11-26", start: "2026-11-25T20:30:00Z", end: "2026-11-26T04:00:00Z" }));
   const { result } = await call();
