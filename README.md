@@ -180,6 +180,6 @@ The stack also runs a small MCP App server, the **evidence board**. Its one tool
 | `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server, the evidence board MCP App (`local/evidence-board/`) and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
-| `AGENTS.md`, `CLAUDE.md` | The instructions your AI agent starts from (`CLAUDE.md` points to `AGENTS.md`). Also `.cursorignore` and `.claude/settings.json`, which keep Cursor and Claude Code from reading the raw evidence files in `telemetry/`, `game/` and `loader/`. |
+| `AGENTS.md`, `CLAUDE.md` | The instructions your AI agent starts from (`CLAUDE.md` points to `AGENTS.md`). Also `.cursorignore` and `.claude/settings.json`, which keep Cursor (`telemetry/`, `game/`, `loader/` and `local/`) and Claude Code (`telemetry/`, `game/` and `loader/`) from reading the raw evidence files. |
 | `agent-kit/` | A copy of `AGENTS.md` for the Codespace's `~/dj-agent` folder. A test keeps the two the same. |
 | `game/ai-evidence/` | The case file for pasting into a chatbot. |
