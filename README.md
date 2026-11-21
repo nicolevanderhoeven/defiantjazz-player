@@ -61,12 +61,7 @@ The evidence is in three Grafana data sources: Loki (logs), Prometheus (metrics)
 - **Route A: the Grafana MCP server.** MCP (Model Context Protocol) is a standard way to give an AI agent tools. The stack already runs a read-only Grafana MCP server, and you add it to your agent once. Pick this if your agent supports MCP, as Claude Code, Cursor and Codex do.
 - **Route B: `gcx`.** `gcx` is the command line for Grafana. Your agent runs `gcx` commands in your terminal to query the data sources. Pick this if your agent can run shell commands and you'd rather not use MCP.
 
-Both routes end by starting your agent in a new empty folder, so it works from the telemetry and not from this repository's files. Make that folder first, from the `local/` folder you're in. It goes next to the repository folder and holds only your agent's instructions ([`agent-kit/AGENTS.md`](agent-kit/AGENTS.md)), saved as `CLAUDE.md`, the file Claude Code reads. Use `AGENTS.md` instead for Codex and many other agents:
-
-```sh
-mkdir -p ../../dj-agent
-cp ../agent-kit/AGENTS.md ../../dj-agent/CLAUDE.md
-```
+Both routes end by starting your agent in this repository's folder (the one you cloned), not a new empty folder. The repository's [`AGENTS.md`](AGENTS.md) (and `CLAUDE.md`, which points to it) holds your agent's instructions, and Claude Code, Codex, Cursor and many other agents read it by themselves, so there is nothing to copy or paste. The case's raw evidence is in this folder as plain files, so the instructions tell your agent not to open them, and Claude Code and Cursor are also set up to block it, so your agent has to query Grafana like an investigator.
 
 The instructions tell your agent to use only the route you set up, and to run `gcx` with `--context dj-local` so it never reaches another Grafana you use.
 
@@ -80,7 +75,7 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp
    ```
 
-   `--scope user` makes the server available from any folder, including your agent's folder. It needs no login or key. In another MCP agent, open its MCP settings and add an HTTP server (also called Streamable HTTP) at `http://localhost:8000/mcp`.
+   `--scope user` makes the server available from any folder, including this repository's. It needs no login or key. In another MCP agent, open its MCP settings and add an HTTP server (also called Streamable HTTP) at `http://localhost:8000/mcp`.
 
 2. Check that the agent can reach the server. In Claude Code, run `claude mcp list`. Success is a line like `grafana-local: http://localhost:8000/mcp (HTTP) - ✔ Connected`. If it says it failed, refer to [If a step fails](#if-a-step-fails).
 
@@ -92,14 +87,16 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
    It prints a line like `The incident night (UTC): from 2026-11-11T20:30:00Z to 2026-11-12T04:00:00Z, case_run="2026-11-11".` Note the two times. The case happened in the past, so your agent needs them to search the right hours. If nothing prints, see the troubleshooting section below.
 
-4. Start your agent in its folder:
+4. Start your agent in the folder you cloned (this repository), not a new empty folder:
 
    ```sh
-   cd ../../dj-agent
+   cd ..
    claude
    ```
 
-   Use `codex` for Codex, or open the folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 3, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
+   Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
+
+   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 3, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 **Route B: `gcx`**
 
@@ -121,14 +118,16 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
    Success is a table with three rows: `loki`, `prometheus` and `tempo`. If you get an error or an empty table, refer to [If a step fails](#if-a-step-fails). Logging in adds a `dj-local` entry to the `gcx` settings and switches to it. If you use `gcx` for other Grafana instances, switch back later with `gcx config use-context <your earlier name>`.
 
-4. Start your agent in its folder:
+4. Start your agent in the folder you cloned (this repository), not a new empty folder:
 
    ```sh
-   cd ../../dj-agent
+   cd ..
    claude
    ```
 
-   Use `codex` for Codex, or open the folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 2, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
+   Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
+
+   Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 2, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 ## 3. Play
 
@@ -164,7 +163,7 @@ The stack also runs a small MCP App server, the **evidence board**. Its one tool
 
   Then ask your agent to "put what you've found on the evidence board". The board appears in the chat. Cursor 3.10.20 to 3.11.x had a bug that stopped MCP Apps from rendering; use 3.12 or later.
 - **Claude Code and other agents:** add `http://localhost:8001/mcp` as a second HTTP server, for example `claude mcp add --scope user --transport http defiantjazz-board http://localhost:8001/mcp`. Any client that supports MCP Apps renders the board the same way. A client that doesn't (a terminal chat, for one) just shows the same findings as text.
-- **Agent instructions:** [`agent-kit/AGENTS.md`](agent-kit/AGENTS.md) tells your agent the tool exists, so it uses it when the server is added.
+- **Agent instructions:** [`AGENTS.md`](AGENTS.md) tells your agent the tool exists, so it uses it when the server is added.
 - **Tests:** `cd local/evidence-board && npm install && npm test`. See its [README](local/evidence-board/README.md) for the browser test harness.
 
 ### If a step fails
@@ -181,5 +180,6 @@ The stack also runs a small MCP App server, the **evidence board**. Its one tool
 | `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server, the evidence board MCP App (`local/evidence-board/`) and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
-| `agent-kit/` | The instructions your AI agent starts from. |
+| `AGENTS.md`, `CLAUDE.md` | The instructions your AI agent starts from (`CLAUDE.md` points to `AGENTS.md`). Also `.cursorignore` and `.claude/settings.json`, which keep Cursor (`telemetry/`, `game/`, `loader/` and `local/`) and Claude Code (`telemetry/`, `game/` and `loader/`) from reading the raw evidence files. |
+| `agent-kit/` | A copy of `AGENTS.md` for the Codespace's `~/dj-agent` folder. A test keeps the two the same. |
 | `game/ai-evidence/` | The case file for pasting into a chatbot. |

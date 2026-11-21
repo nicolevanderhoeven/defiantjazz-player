@@ -1,0 +1,6 @@
+# Keep the AI away from the raw evidence files: the agent has to query Grafana (MCP or gcx).
+# Blocks Cursor's AI file access and indexing only; docker compose and your own terminal are unaffected.
+telemetry/
+game/
+loader/
+local/

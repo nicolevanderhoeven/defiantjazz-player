@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./telemetry/**)",
+      "Read(./game/**)",
+      "Read(./loader/**)"
+    ]
+  }
+}
