@@ -142,6 +142,9 @@ services:
     build: ./evidence-board
     ports:
       - "127.0.0.1:${DJ_BOARD_PORT:-8001}:8001"
+    volumes:
+      # Read-only: its case_window tool reads the incident night's window the loader leaves here. It has no other access to the case.
+      - case-window:/window:ro
 
   # Creates a read-only (Viewer) Grafana service account and token for `gcx` and prints the `gcx login` line to paste,
   # so you don't have to click through Grafana's settings. It runs once and exits; a token it made earlier is kept

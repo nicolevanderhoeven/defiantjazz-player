@@ -2,12 +2,14 @@
 // One tool, show_evidence_board, takes what the investigating agent has found so far and draws it as an interactive case
 // board in the chat. Hosts with no interactive views get the same findings as text. Streamable HTTP at /mcp.
 import { createServer } from "node:http";
+import * as z from "zod/v4";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import { toNodeHandler, localhostHostValidation, localhostOriginValidation } from "@modelcontextprotocol/node";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { boardInput, boardText, BOARD_TITLE } from "./board.mjs";
+import { CASE_WINDOW_TOOL, CASE_WINDOW_DESCRIPTION, SERVER_INSTRUCTIONS, WINDOW_FILE, caseWindowResult } from "./window.mjs";
 
 export const TOOL_NAME = "show_evidence_board";
 export const RESOURCE_URI = "ui://defiantjazz/evidence-board.html";
@@ -22,8 +24,19 @@ export function loadView(path = fileURLToPath(new URL("./dist/view.html", import
   return readFileSync(path, "utf8");
 }
 
-export function createBoardServer(view = loadView()) {
-  const server = new McpServer({ name: "defiantjazz-evidence-board", version: "1.0.0" });
+export function createBoardServer(view = loadView(), windowFile = WINDOW_FILE) {
+  const server = new McpServer({ name: "defiantjazz-evidence-board", version: "1.0.0" }, { instructions: SERVER_INSTRUCTIONS });
+
+  server.registerTool(
+    CASE_WINDOW_TOOL,
+    {
+      title: "Incident night window",
+      description: CASE_WINDOW_DESCRIPTION,
+      inputSchema: z.object({}),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async () => caseWindowResult(windowFile),
+  );
 
   registerAppTool(
     server,
@@ -58,8 +71,8 @@ export function createBoardServer(view = loadView()) {
   return server;
 }
 
-export function createHttpServer(view = loadView()) {
-  const handler = toNodeHandler(createMcpHandler(() => createBoardServer(view)));
+export function createHttpServer(view = loadView(), windowFile = WINDOW_FILE) {
+  const handler = toNodeHandler(createMcpHandler(() => createBoardServer(view, windowFile)));
   const validateHost = localhostHostValidation();
   const validateOrigin = localhostOriginValidation();
   return createServer((req, res) => {
