@@ -6,7 +6,14 @@
 !/.gitignore
 !/README.md
 
-# The investigator's instructions for their AI agent
+# The investigator's instructions for their AI agent. Start the agent in the repository root:
+# AGENTS.md (and CLAUDE.md, which points to it), plus the settings that keep the agent off the raw evidence.
+# agent-kit/AGENTS.md is a copy of AGENTS.md for the Codespace's ~/dj-agent folder; a test keeps them equal.
+!/AGENTS.md
+!/CLAUDE.md
+!/.cursorignore
+!/.claude/
+!/.claude/settings.json
 !/agent-kit/
 !/agent-kit/AGENTS.md
 

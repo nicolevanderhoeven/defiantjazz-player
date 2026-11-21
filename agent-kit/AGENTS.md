@@ -9,7 +9,7 @@ You are one half of a pair. You can read the case's telemetry (logs, metrics and
 ## Rules
 
 - **Use only the telemetry**, through the Grafana MCP server or `gcx` (below). Both read the same local Grafana, Loki, Prometheus and Tempo.
-- **Do not read any other files.** Work in this empty folder. If you can see a checkout of the game's repository anywhere, don't open it: it contains spoilers, and you don't need it. Don't search the web for the case or its solution either.
+- **Do not read any other files.** Work from the folder you were started in. If it is the player repository (it has `telemetry/`, `game/`, `loader/` and `local/` folders), do not read the case files in `telemetry/`, `game/` or `loader/`, and don't read `local/` either: the raw evidence is there as plain files, and reading it instead of querying Grafana defeats the point of the game. The same goes for any other checkout of the game's repository you can see: don't open it, it contains spoilers, and you don't need it. Don't search the web for the case or its solution either.
 - **Don't treat your own tracks as evidence.** Your calls to Grafana are recorded as traces in the same Tempo (services `grafana` and `mcp-grafana`). Ignore them; the case's traces are the badge journeys (`service.name="kipsake-badge-tracking"`).
 - Report what the data shows, with timestamps and the query that showed it. Say what you can't tell from the data, and what you'd check next.
 
