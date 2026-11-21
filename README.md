@@ -152,7 +152,7 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ### Evidence board (optional MCP App)
 
-The stack also runs a small MCP App server, the **evidence board**. Its one tool, `show_evidence_board`, takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an investigator's cork board in the chat, in two lanes: **From the telemetry** (what the agent found by querying the data) and **From your leads** (what you told the agent from the leads you opened in the game, which it can't see unless you say). Pin-up cards, red string from each person to what mentions them, click a clue to open it, click a person to light up their string. It shows only what the agent passes in. It has no access to Grafana or to the case, and it never shows a solution.
+The stack also runs a small MCP App server, the **evidence board**. It has two tools. `case_window` returns the incident night's window (from, to and case_run, in UTC), so your agent doesn't have to work out the date. `show_evidence_board` takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an investigator's cork board in the chat, in two lanes: **From the telemetry** (what the agent found by querying the data) and **From your leads** (what you told the agent from the leads you opened in the game, which it can't see unless you say). Pin-up cards, red string from each person to what mentions them, click a clue to open it, click a person to light up their string. The board shows only what the agent passes in. The server has no access to Grafana or to the case, except the incident night's window (a read-only file the loader leaves behind), and it never shows a solution. Your agent calls `case_window` first if it has it; otherwise it finds the night itself.
 
 - **Endpoint:** `http://localhost:8001/mcp` (streamable HTTP), reachable only from this machine. Port `8001`; if something else uses it, `./up.sh` picks a free one (saved as `DJ_BOARD_PORT` in `local/.env`) and prints the board's address. The first `./up.sh` builds it, which takes a minute.
 - **Cursor** (2.6 or later, which supports [MCP Apps](https://cursor.com/changelog/2-6)): add it beside the Grafana server in `.cursor/mcp.json`:
@@ -163,7 +163,7 @@ The stack also runs a small MCP App server, the **evidence board**. Its one tool
 
   Then ask your agent to "put what you've found on the evidence board". The board appears in the chat. Cursor 3.10.20 to 3.11.x had a bug that stopped MCP Apps from rendering; use 3.12 or later.
 - **Claude Code and other agents:** add `http://localhost:8001/mcp` as a second HTTP server, for example `claude mcp add --scope user --transport http defiantjazz-board http://localhost:8001/mcp`. Any client that supports MCP Apps renders the board the same way. A client that doesn't (a terminal chat, for one) just shows the same findings as text.
-- **Agent instructions:** [`AGENTS.md`](AGENTS.md) tells your agent the tool exists, so it uses it when the server is added.
+- **Agent instructions:** [`AGENTS.md`](AGENTS.md) tells your agent the tools exist, and the server sends a short version of the rules when the agent connects (Claude Code, Cursor and Codex use it; Claude Desktop does not). Call `case_window` first if you have it; otherwise find the night as `AGENTS.md` describes.
 - **Tests:** `cd local/evidence-board && npm install && npm test`. See its [README](local/evidence-board/README.md) for the browser test harness.
 
 ### If a step fails

@@ -28,10 +28,10 @@ async function rpc(method, params, headers = {}) {
   return { status: res.status, body: line ? JSON.parse(line.slice(5)) : text };
 }
 
-test("the one tool is listed with a schema and points at the board view", async () => {
+test("the board tool is listed with a schema and points at the board view", async () => {
   const { body } = await rpc("tools/list");
-  assert.equal(body.result.tools.length, 1);
-  const tool = body.result.tools[0];
+  assert.deepEqual(body.result.tools.map((t) => t.name).sort(), ["case_window", TOOL_NAME]);
+  const tool = body.result.tools.find((t) => t.name === TOOL_NAME);
   assert.equal(tool.name, TOOL_NAME);
   assert.equal(tool._meta.ui.resourceUri, RESOURCE_URI);
   assert.deepEqual(Object.keys(tool.inputSchema.properties).sort(), ["clues", "people", "questions", "scene", "scenes", "timeline", "title"]);

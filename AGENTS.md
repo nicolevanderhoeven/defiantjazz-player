@@ -40,6 +40,8 @@ The case holds about 14 weeks of ordinary nights and one incident night. Records
 
 ## The incident night
 
+If you have a `case_window` tool (the evidence board's MCP server provides it), call `case_window` first and use the from, to and case_run it returns; otherwise find the night as below.
+
 Everything is UTC. The stack filled in this window when it made this file:
 
 ```

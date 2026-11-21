@@ -11,7 +11,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/board.mjs /app/server.mjs ./
+COPY --from=build /app/board.mjs /app/server.mjs /app/window.mjs ./
 COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 8001
