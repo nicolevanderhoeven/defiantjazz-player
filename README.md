@@ -94,6 +94,8 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    claude
    ```
 
+   Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
+
    Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 3, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
 **Route B: `gcx`**
@@ -122,6 +124,8 @@ Then follow one route's steps, running its commands from `local/` unless a step 
    cd ..
    claude
    ```
+
+   Keep your agent's auto-approve ("yolo" or `--force`) mode off, so reads of the evidence files stay blocked or ask you first. The block is protection in practice, not a guarantee.
 
    Use `codex` for Codex, or open the repository folder in Cursor. The first time, the agent may ask you to sign in. Then give it the two times from step 2, for example: `The incident night ran from <start> to <end>.` To check the connection, ask `Which data sources can you query?` It should name Loki, Prometheus and Tempo.
 
