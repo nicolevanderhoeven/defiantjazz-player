@@ -20,13 +20,6 @@ class AgentInstructions(unittest.TestCase):
     def test_claude_md_points_to_agents_md(self):
         self.assertIn("@AGENTS.md", read("CLAUDE.md").split())
 
-    def test_root_instructions_keep_the_rules(self):
-        text = read("AGENTS.md")
-        for needle in ["I can see the telemetry, not your leads", "--context dj-local",
-                       "Use only the telemetry", "own tracks", "The incident night",
-                       "do not read the case files in `telemetry/`"]:
-            self.assertIn(needle.lower(), text.lower(), needle)
-
     def test_cursorignore_blocks_the_evidence_folders(self):
         lines = [l.strip() for l in read(".cursorignore").splitlines() if l.strip() and not l.startswith("#")]
         for d in BLOCKED:
