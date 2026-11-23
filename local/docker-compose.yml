@@ -2,16 +2,16 @@
 #
 #   ./up.sh        (or: docker compose up -d)
 #
-# starts Loki, Prometheus, Tempo, Grafana and the Grafana MCP server, then loads the case into them
+# starts Loki, Prometheus, Tempo, Grafana and the MCP server (the Grafana MCP server and the evidence board behind one endpoint), then loads the case into them
 # and prints a ready-to-paste `gcx login` line (`docker compose logs gcx-token`).
 # Open Grafana at http://localhost:3000. Play the story in your browser at https://nicolevanderhoeven.com/defiantjazz/?where=local
 # Nothing here talks to Grafana Cloud.
 #
-# Only three ports are published on your machine, all bound to 127.0.0.1 so only this machine can reach them:
-# Grafana (3000), the Grafana MCP server (8000) and the evidence board (8001). Loki, Prometheus and Tempo are reached over the stack's own
-# network by Grafana, the MCP server and the loader, so they can't clash with anything else you run.
-# Start it with ./up.sh: if something else already uses 3000, 8000 or 8001, it picks free ports and saves them in
-# local/.env as DJ_GRAFANA_PORT, DJ_MCP_PORT, DJ_BOARD_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
+# Only two ports are published on your machine, both bound to 127.0.0.1 so only this machine can reach them:
+# Grafana (3000) and the MCP server (8000: the Grafana MCP server's tools and the evidence board, one endpoint). Loki, Prometheus and Tempo
+# are reached over the stack's own network by Grafana, the MCP server and the loader, so they can't clash with anything else you run.
+# Start it with ./up.sh: if something else already uses 3000 or 8000, it picks free ports and saves them in
+# local/.env as DJ_GRAFANA_PORT, DJ_MCP_PORT (and DJ_ASSISTANT_PORT for the optional Assistant profile).
 # Plain `docker compose up -d` does no port handling.
 # To reach Loki, Prometheus or Tempo from your own machine (for curl or `python loader/load.py --target local`),
 # add the file docker-compose.expose.yml: `docker compose -f docker-compose.yml -f docker-compose.expose.yml up -d`.
@@ -105,15 +105,17 @@ services:
     restart: "no"
     depends_on: [loki, prometheus, tempo]
 
-  # Open-source Grafana MCP server, so any MCP-capable AI agent can investigate the local stack.
-  # Streamable HTTP at http://localhost:8000/mcp. Read-only: write tools are disabled.
+  # Open-source Grafana MCP server, so any MCP-capable AI agent can investigate the local stack. Read-only: write tools are
+  # disabled. It isn't published on your machine: the mcp-gateway service below is the one MCP endpoint (http://localhost:8000/mcp)
+  # and forwards to it, so a player installs one server and gets these tools and the evidence board.
   mcp-grafana:
     image: grafana/mcp-grafana:2.2.0
     entrypoint: ["/app/mcp-grafana"]
     command:
       - --transport=streamable-http
       - --address=0.0.0.0:8000
-      - --allowed-hosts=localhost:${DJ_MCP_PORT:-8000},127.0.0.1:${DJ_MCP_PORT:-8000}
+      # Only the gateway reaches it, by this name on the stack's own network.
+      - --allowed-hosts=mcp-grafana:8000
       - --disable-write
       # Every tool call your agent makes becomes a trace in the local Tempo, with its arguments (the queries it sent).
       - --include-args-in-spans
@@ -130,21 +132,27 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=${DJ_MCP_TRACES-http://tempo:4317}
       # Tempo takes traces only, so don't send logs.
       - OTEL_LOGS_EXPORTER=none
-    ports:
-      - "127.0.0.1:${DJ_MCP_PORT:-8000}:8000"
     depends_on: [grafana]
 
-  # The evidence board: a small MCP App server next to the Grafana MCP server. Its one tool, show_evidence_board, draws what the
-  # investigating agent has found so far (timeline, clues, people, open questions) as an interactive board in chats whose app
-  # supports MCP Apps (Cursor does), and returns the same findings as text everywhere else. It shows only what the agent
-  # passes in and has no access to Grafana or to the case. Streamable HTTP at http://localhost:8001/mcp.
-  evidence-board:
+  # The one MCP endpoint, Streamable HTTP at http://localhost:8000/mcp: the evidence board and the Grafana MCP server behind a
+  # small gateway (local/evidence-board/gateway.mjs). The evidence board is an MCP App server: its tool show_evidence_board draws what
+  # the investigating agent has found so far (timeline, clues, people, open questions) as an interactive board in chats whose app
+  # supports MCP Apps (Cursor does), and returns the same findings as text everywhere else. It shows only what the agent passes in
+  # and has no access to Grafana or to the case. The gateway lists both servers' tools together, sends each call to the server that
+  # owns the tool and passes the Grafana MCP server's answers on untouched. If one of the two is down, the other keeps working.
+  # The player installs this one server, so it stays on port 8000 by default: the address the web app's install link uses.
+  mcp-gateway:
     build: ./evidence-board
+    environment:
+      UPSTREAM_MCP_URL: http://mcp-grafana:8000/mcp
+      # Optional: set MCP_SERVER_TOKEN in local/.env to require "Authorization: Bearer <token>" from MCP clients.
+      MCP_SERVER_TOKEN: ${MCP_SERVER_TOKEN:-}
     ports:
-      - "127.0.0.1:${DJ_BOARD_PORT:-8001}:8001"
+      - "127.0.0.1:${DJ_MCP_PORT:-8000}:8001"
     volumes:
       # Read-only: its case_window tool reads the incident night's window the loader leaves here. It has no other access to the case.
       - case-window:/window:ro
+    depends_on: [mcp-grafana]
 
   # Creates a read-only (Viewer) Grafana service account and token for `gcx` and prints the `gcx login` line to paste,
   # so you don't have to click through Grafana's settings. It runs once and exits; a token it made earlier is kept

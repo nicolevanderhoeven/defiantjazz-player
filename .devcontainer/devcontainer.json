@@ -11,11 +11,10 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "forwardPorts": [3000, 8000, 8001],
+  "forwardPorts": [3000, 8000],
   "portsAttributes": {
     "3000": { "label": "Grafana", "onAutoForward": "notify", "visibility": "private" },
-    "8000": { "label": "Grafana MCP server", "onAutoForward": "silent", "visibility": "private" },
-    "8001": { "label": "Evidence board MCP App", "onAutoForward": "silent", "visibility": "private" }
+    "8000": { "label": "MCP server (Grafana tools and evidence board)", "onAutoForward": "silent", "visibility": "private" }
   },
   "remoteEnv": {
     "GCX_KEYCHAIN": "off"
