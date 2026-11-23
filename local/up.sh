@@ -3,7 +3,7 @@
 # go before `up`, such as `./up.sh --profile assistant`.
 #
 # If another program (often another Grafana) already uses a port the stack publishes on your machine (Grafana 3000,
-# the MCP server 8000, the evidence board 8001, and 3001 for the optional Assistant profile), this picks a free one for you, saves it to
+# the MCP server 8000, and 3001 for the optional Assistant profile), this picks a free one for you, saves it to
 # local/.env so the next run and your links stay the same, starts the stack, and prints the real addresses.
 # Running it again while the stack is up is fine, and loads the case if the loader hadn't finished.
 set -u
@@ -52,8 +52,7 @@ free_port() {
 
 # service|container port|setting|default host port|what it is
 ports="grafana|3000|DJ_GRAFANA_PORT|3000|Grafana
-mcp-grafana|8000|DJ_MCP_PORT|8000|the Grafana MCP server
-evidence-board|8001|DJ_BOARD_PORT|8001|the evidence board"
+mcp-gateway|8001|DJ_MCP_PORT|8000|the MCP server (the Grafana tools and the evidence board)"
 case " ${flags[*]-} ${COMPOSE_PROFILES:-} " in
   *assistant*) ports="$ports
 grafana-assistant|3000|DJ_ASSISTANT_PORT|3001|Grafana Assistant" ;;
@@ -61,7 +60,6 @@ esac
 
 grafana_port=3000
 mcp_port=8000
-board_port=8001
 while IFS='|' read -r service cport var default label; do
   port=$(setting "$var" "$default")
   case "$port" in '' | *[!0-9]*) continue ;; esac # not a number: leave it to Compose to complain
@@ -79,7 +77,6 @@ while IFS='|' read -r service cport var default label; do
   case "$var" in
     DJ_GRAFANA_PORT) grafana_port=$port ;;
     DJ_MCP_PORT) mcp_port=$port ;;
-    DJ_BOARD_PORT) board_port=$port ;;
   esac
 done <<EOF
 $ports
@@ -90,8 +87,7 @@ dc up -d || exit $?
 grafana_url="http://localhost:$grafana_port"
 echo
 echo "Grafana:     $grafana_url"
-echo "MCP server:  http://localhost:$mcp_port/mcp"
-echo "Evidence board (optional MCP App):  http://localhost:$board_port/mcp"
+echo "MCP server:  http://localhost:$mcp_port/mcp  (the Grafana tools and the evidence board)"
 login=""
 waited=0
 while [ "$waited" -le "${DJ_UP_WAIT:-60}" ]; do

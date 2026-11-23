@@ -2,6 +2,7 @@
 // One tool, show_evidence_board, takes what the investigating agent has found so far and draws it as an interactive case
 // board in the chat. Hosts with no interactive views get the same findings as text. Streamable HTTP at /mcp.
 import { createServer } from "node:http";
+import { createGatewayServer } from "./gateway.mjs";
 import * as z from "zod/v4";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -85,9 +86,29 @@ export function createHttpServer(view = loadView(), windowFile = WINDOW_FILE) {
   });
 }
 
+// The board on a private loopback port, behind the gateway that serves the one MCP endpoint (see gateway.mjs).
+export async function createGateway({ upstream, view = loadView(), windowFile = WINDOW_FILE, token } = {}) {
+  const board = createHttpServer(view, windowFile);
+  await new Promise((resolve) => board.listen(0, "127.0.0.1", resolve));
+  const gateway = createGatewayServer({
+    local: `http://127.0.0.1:${board.address().port}/mcp`,
+    upstream,
+    localTools: [TOOL_NAME, CASE_WINDOW_TOOL],
+    localUriPrefix: RESOURCE_URI.slice(0, RESOURCE_URI.lastIndexOf("/") + 1),
+    serverInfo: { name: "defiantjazz-mcp", version: "1.0.0" },
+    token,
+  });
+  gateway.on("close", () => board.close());
+  return gateway;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT ?? 8001);
-  createHttpServer().listen(port, process.env.HOST ?? "0.0.0.0", () => {
-    console.log(`evidence-board: MCP endpoint on http://localhost:${port}/mcp`);
+  const host = process.env.HOST ?? "0.0.0.0";
+  const upstream = process.env.UPSTREAM_MCP_URL;
+  // With UPSTREAM_MCP_URL (the Grafana MCP server) this is the stack's one MCP endpoint; without it, the board alone.
+  const server = upstream ? await createGateway({ upstream, token: process.env.MCP_SERVER_TOKEN || undefined }) : createHttpServer();
+  server.listen(port, host, () => {
+    console.log(`${upstream ? `mcp-gateway (board + ${upstream})` : "evidence-board"}: MCP endpoint on http://localhost:${port}/mcp`);
   });
 }

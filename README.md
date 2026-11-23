@@ -6,7 +6,7 @@ Kipsake rents your sleep: at night its Dreamers sleep in pods while their sleepw
 
 You work out who did it. The evidence is **telemetry** (logs, metrics and traces) loaded into a Grafana stack on your own machine, and you investigate it with your own AI agent. The story, the leads and the scoring are in the game's web page; this repository is the evidence and the stack that serves it.
 
-This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and the Grafana MCP server and an optional evidence board (see [Evidence board](#evidence-board-optional-mcp-app)), started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
+This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and one MCP server that gives your agent both the Grafana tools and an evidence board (see [Evidence board](#evidence-board-mcp-app)), started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
 
 ## Quickest start: Open in Codespaces
 
@@ -18,8 +18,8 @@ No Docker or `gcx` on your machine? Run everything in the cloud with a GitHub Co
 2. Wait about three minutes. The Codespace starts the stack, loads the case and logs `gcx` in for you. A terminal opened before the case has loaded says so and prints the welcome note there as soon as it is ready. Type `dj-help` in the terminal any time to show the note again.
 3. In that terminal, go to your agent's folder, which already holds its instructions: `cd ~/dj-agent`.
 4. Install your own AI agent (see [Bring your own agent](#bring-your-own-agent) below), start it there. Either let it run `gcx` commands (already logged in), or add the Grafana MCP server first.
-5. To see the evidence yourself, open the **Ports** tab in the Codespace and click the link beside **Grafana** (port 3000). Ports 3000, 8000 and 8001 are private to your account.
-6. Optional: put what your agent has found on the [evidence board](#evidence-board-optional-mcp-app). The Codespace runs it too, at `http://localhost:8001/mcp` inside the Codespace, where your agent runs. A chat in a terminal can't draw it, so there the agent shows the same findings as text.
+5. To see the evidence yourself, open the **Ports** tab in the Codespace and click the link beside **Grafana** (port 3000). Ports 3000 and 8000 are private to your account.
+6. Optional: put what your agent has found on the [evidence board](#evidence-board-mcp-app). It is part of the same MCP server as the Grafana tools (`http://localhost:8000/mcp` inside the Codespace, where your agent runs), so there is nothing more to add. A chat in a terminal can't draw it, so there the agent shows the same findings as text.
 
 ### Bring your own agent
 
@@ -48,7 +48,7 @@ cd defiantjazz-player/local
 ./up.sh
 ```
 
-`./up.sh` is the way to start the stack. If another program already uses port 3000 (Grafana), 8000 (the MCP server) or 8001 (the evidence board), it picks a free port by itself, saves it in `local/.env` so the next run and your links stay the same, starts the stack, and prints the real addresses at the end: the Grafana URL, the MCP URL, the evidence board's URL and your `gcx login` line. Use those addresses wherever this guide says `localhost:3000` or `localhost:8000`. (Advanced: plain `docker compose up -d` also works, but it does no port handling, so a taken port leaves the stack half started.)
+`./up.sh` is the way to start the stack. If another program already uses port 3000 (Grafana) or 8000 (the MCP server), it picks a free port by itself, saves it in `local/.env` so the next run and your links stay the same, starts the stack, and prints the real addresses at the end: the Grafana URL, the MCP URL and your `gcx login` line. Use those addresses wherever this guide says `localhost:3000` or `localhost:8000`. (Advanced: plain `docker compose up -d` also works, but it does no port handling, so a taken port leaves the stack half started.)
 
 The first start pulls the images and builds a small loader, then loads the case: about two minutes. `docker compose ps -a` shows the `loader` as `Exited (0)` once the case is in.
 
@@ -146,23 +146,25 @@ docker compose down -v   # also wipes the case and Grafana's data (the next `up`
 
 ## Good to know
 
-- **A port is already taken?** You don't need to do anything: `./up.sh` notices, picks a free port (for example 3300 for Grafana, 8300 for the MCP server or 8301 for the evidence board), saves it in `local/.env` (a hidden file, which also holds the administrator password if you want to change it before the first start), and prints the addresses to use. Use them wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses your port. To go back to the defaults, delete the `DJ_*_PORT` lines from `local/.env`. Loki, Prometheus and Tempo aren't published, so they can't clash with anything; the optional `docker-compose.expose.yml` in `local/` publishes them if you want to reach them from your own machine.
+- **A port is already taken?** You don't need to do anything: `./up.sh` notices, picks a free port (for example 3300 for Grafana or 8300 for the MCP server), saves it in `local/.env` (a hidden file, which also holds the administrator password if you want to change it before the first start), and prints the addresses to use. Use them wherever the commands and the game page show `3000` or `8000`. The login line in Route B already uses your port. To go back to the defaults, delete the `DJ_*_PORT` lines from `local/.env`. Loki, Prometheus and Tempo aren't published, so they can't clash with anything; the optional `docker-compose.expose.yml` in `local/` publishes them if you want to reach them from your own machine.
 - **Watch your agent investigate.** Every query your agent runs through the MCP server or `gcx` is recorded as a trace in the same local Tempo, so you can open Grafana and see what it asked. Set `DJ_MCP_TRACES=` and `DJ_GRAFANA_TRACES=` (empty) in `local/.env` to switch that off.
 - **Loki is slow to see old lines** for about a minute after the case is first loaded. If a query finds nothing in a fresh stack, wait and retry.
 
-### Evidence board (optional MCP App)
+### Evidence board (MCP App)
 
-The stack also runs a small MCP App server, the **evidence board**. It has two tools. `case_window` returns the incident night's window (from, to and case_run, in UTC), so your agent doesn't have to work out the date. `show_evidence_board` takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an investigator's cork board in the chat, in two lanes: **From the telemetry** (what the agent found by querying the data) and **From your leads** (what you told the agent from the leads you opened in the game, which it can't see unless you say). Pin-up cards, red string from each person to what mentions them, click a clue to open it, click a person to light up their string. The board shows only what the agent passes in. The server has no access to Grafana or to the case, except the incident night's window (a read-only file the loader leaves behind), and it never shows a solution. Your agent calls `case_window` first if it has it; otherwise it finds the night itself.
+The MCP server your agent connects to (`http://localhost:8000/mcp`) is two servers behind one address: the Grafana MCP server and the **evidence board**, a small MCP App server. One install gives your agent both, so there is nothing extra to add. The evidence board has two tools. `case_window` returns the incident night's window (from, to and case_run, in UTC), so your agent doesn't have to work out the date. `show_evidence_board` takes what your agent has found so far (timeline entries, clues, people and open questions) and draws it as an investigator's cork board in the chat, in two lanes: **From the telemetry** (what the agent found by querying the data) and **From your leads** (what you told the agent from the leads you opened in the game, which it can't see unless you say). Pin-up cards, red string from each person to what mentions them, click a clue to open it, click a person to light up their string. The board shows only what the agent passes in. The board has no access to Grafana or to the case, except the incident night's window (a read-only file the loader leaves behind), and it never shows a solution. Your agent calls `case_window` first if it has it; otherwise it finds the night itself.
 
-- **Endpoint:** `http://localhost:8001/mcp` (streamable HTTP), reachable only from this machine. Port `8001`; if something else uses it, `./up.sh` picks a free one (saved as `DJ_BOARD_PORT` in `local/.env`) and prints the board's address. The first `./up.sh` builds it, which takes a minute.
-- **Cursor** (2.6 or later, which supports [MCP Apps](https://cursor.com/changelog/2-6)): add it beside the Grafana server in `.cursor/mcp.json`:
+- **How it fits together:** the `mcp-gateway` service is the only MCP server published on your machine. It lists the Grafana tools and the board's tools together, sends each call to the server that owns the tool and passes the Grafana MCP server's answers (and its own views) on unchanged. The Grafana MCP server (`mcp-grafana`) now runs inside the stack's network and publishes no port. If one of the two is down the other keeps working: the tool list just omits it and a call that needs it says so. The gateway's code is in `local/evidence-board/` (`gateway.mjs`).
+- **Endpoint:** `http://localhost:8000/mcp` (streamable HTTP), reachable only from this machine. Port `8000`; if something else uses it, `./up.sh` picks a free one (saved as `DJ_MCP_PORT` in `local/.env`) and prints the address. The first `./up.sh` builds the gateway, which takes a minute.
+- **Cursor** (2.6 or later, which supports [MCP Apps](https://cursor.com/changelog/2-6)): the game's "Add to Cursor" button installs this one server, so the board is there already. Or add it by hand in `.cursor/mcp.json`:
 
   ```json
-  {"mcpServers": {"grafana-local": {"url": "http://localhost:8000/mcp"}, "defiantjazz-board": {"url": "http://localhost:8001/mcp"}}}
+  {"mcpServers": {"grafana-local": {"url": "http://localhost:8000/mcp"}}}
   ```
 
   Then ask your agent to "put what you've found on the evidence board". The board appears in the chat. Cursor 3.10.20 to 3.11.x had a bug that stopped MCP Apps from rendering; use 3.12 or later.
-- **Claude Code and other agents:** add `http://localhost:8001/mcp` as a second HTTP server, for example `claude mcp add --scope user --transport http defiantjazz-board http://localhost:8001/mcp`. Any client that supports MCP Apps renders the board the same way. A client that doesn't (a terminal chat, for one) just shows the same findings as text.
+- **Claude Code and other agents:** the same server, for example `claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp`. Any client that supports MCP Apps renders the board the same way. A client that doesn't (a terminal chat, for one) just shows the same findings as text.
+- **If you added the board separately before** (a second server called `defiantjazz-board` at `http://localhost:8001/mcp`), remove it from your agent's MCP settings: port 8001 is no longer published, and the board's tools now arrive through the one server. A leftover `DJ_BOARD_PORT` line in `local/.env` does nothing.
 - **Agent instructions:** [`AGENTS.md`](AGENTS.md) tells your agent the tools exist, and the server sends a short version of the rules when the agent connects (Claude Code, Cursor and Codex use it; Claude Desktop does not). Call `case_window` first if you have it; otherwise find the night as `AGENTS.md` describes.
 - **Tests:** `cd local/evidence-board && npm install && npm test`. See its [README](local/evidence-board/README.md) for the browser test harness.
 
@@ -177,7 +179,7 @@ The stack also runs a small MCP App server, the **evidence board**. It has two t
 
 | Folder | What it holds |
 |---|---|
-| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the Grafana MCP server, the evidence board MCP App (`local/evidence-board/`) and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
+| `local/` | The Docker Compose stack: Loki, Prometheus, Tempo, Grafana (with its data sources and a starting dashboard), the MCP server (the Grafana MCP server and the evidence board MCP App behind one gateway, `local/evidence-board/`) and the `gcx` token helper. `up.sh` starts it and picks free ports if the defaults are taken. |
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
 | `AGENTS.md`, `CLAUDE.md` | The instructions your AI agent starts from (`CLAUDE.md` points to `AGENTS.md`). Also `.cursorignore` and `.claude/settings.json`, which keep Cursor (`telemetry/`, `game/`, `loader/` and `local/`) and Claude Code (`telemetry/`, `game/` and `loader/`) from reading the raw evidence files. |
