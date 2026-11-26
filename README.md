@@ -8,32 +8,6 @@ You work out who did it. The evidence is **telemetry** (logs, metrics and traces
 
 This repository holds the stack and the case data, and nothing else: Loki, Prometheus, Tempo, Grafana and one MCP server that gives your agent both the Grafana tools and an evidence board (see [Evidence board](#evidence-board-mcp-app)), started together by Docker Compose, plus the telemetry and the loader that fills them. Nothing in it connects to Grafana Cloud, and it holds no story or solution. The game itself is at <https://nicolevanderhoeven.com/defiantjazz/>.
 
-## Quickest start: Open in Codespaces
-
-No Docker or `gcx` on your machine? Run everything in the cloud with a GitHub Codespace, a ready-made development machine in your browser.
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/nicolevanderhoeven/defiantjazz-player)
-
-1. Click the badge (or open <https://codespaces.new/nicolevanderhoeven/defiantjazz-player>), sign in to GitHub, and choose **Create codespace**. Keep the default 2-core machine.
-2. Wait about three minutes. The Codespace starts the stack, loads the case and logs `gcx` in for you. A terminal opened before the case has loaded says so and prints the welcome note there as soon as it is ready. Type `dj-help` in the terminal any time to show the note again.
-3. In that terminal, go to your agent's folder, which already holds its instructions: `cd ~/dj-agent`.
-4. Install your own AI agent (see [Bring your own agent](#bring-your-own-agent) below), start it there. Either let it run `gcx` commands (already logged in), or add the Grafana MCP server first.
-5. To see the evidence yourself, open the **Ports** tab in the Codespace and click the link beside **Grafana** (port 3000). Ports 3000 and 8000 are private to your account.
-6. Optional: put what your agent has found on the [evidence board](#evidence-board-mcp-app). It is part of the same MCP server as the Grafana tools (`http://localhost:8000/mcp` inside the Codespace, where your agent runs), so there is nothing more to add. A chat in a terminal can't draw it, so there the agent shows the same findings as text.
-
-### Bring your own agent
-
-The Codespace has no AI agent installed, so you choose which one to use and nobody's plan or allowance is used unless you decide it. The terminal's welcome note prints the same commands: run one agent's install line in the Codespace terminal, then start the agent in `~/dj-agent`. (Node.js is in the Codespace so the `npm` lines work.) You are responsible for any costs of using your own agent.
-
-- **Claude Code** (needs a Claude subscription or API key). Install: `curl -fsSL https://claude.ai/install.sh | bash`. Add the MCP server with `claude mcp add --scope user --transport http grafana-local http://localhost:8000/mcp`, or let it run `gcx`. Docs: <https://code.claude.com/docs/en/setup>
-- **Codex** (needs a ChatGPT plan or API key). Install: `npm install -g @openai/codex`. It can run `gcx` as is; for MCP, see its [docs](https://developers.openai.com/codex).
-- **Copilot CLI** (needs a GitHub Copilot plan, including Free). Install: `npm install -g @github/copilot`. A Codespace has no keychain, so first let Copilot keep your login in its settings file: `mkdir -p ~/.copilot && echo '{"storeTokenPlaintext": true}' > ~/.copilot/settings.json`. Then run `cd ~/dj-agent && copilot`, type `/login` and follow the prompts. To use the Grafana MCP server, run `copilot mcp add --transport http grafana-local http://localhost:8000/mcp`; for `gcx`, nothing more. This path was tested in a Codespace on 2026-11-13. Docs: <https://docs.github.com/en/copilot/how-tos/copilot-cli>
-- **Any other agent** that speaks MCP: add an HTTP (Streamable HTTP) server at `http://localhost:8000/mcp` in its MCP settings. Any agent that can run shell commands can use `gcx`, which is already logged in.
-
-**Cost:** a Codespace is billed to your GitHub account. Personal accounts include 120 free core-hours a month (60 hours on the 2-core machine), and an investigation takes an hour or two. Accounts that belong to an organization may not have free hours. A stopped Codespace still uses storage, so delete it from <https://github.com/codespaces> when you've finished.
-
-The rest of this page is the route on your own machine. The game's setup screen and its `localhost` links assume that route, so in a Codespace use the Ports tab link for Grafana.
-
 ## What you need
 
 - **Docker with Compose** (Docker Desktop, or Docker Engine with the Compose plugin). Nothing else: no Python.
@@ -183,5 +157,5 @@ The MCP server your agent connects to (`http://localhost:8000/mcp`) is two serve
 | `telemetry/` | The case's evidence: door and badge events, chat, system logs, metrics and records. |
 | `loader/` | The small loader that puts the telemetry into the stack. |
 | `AGENTS.md`, `CLAUDE.md` | The instructions your AI agent starts from (`CLAUDE.md` points to `AGENTS.md`). Also `.cursorignore` and `.claude/settings.json`, which keep Cursor (`telemetry/`, `game/`, `loader/` and `local/`) and Claude Code (`telemetry/`, `game/` and `loader/`) from reading the raw evidence files. |
-| `agent-kit/` | A copy of `AGENTS.md` for the Codespace's `~/dj-agent` folder. A test keeps the two the same. |
+| `agent-kit/` | A copy of `AGENTS.md`. A test keeps the two the same. |
 | `game/ai-evidence/` | The case file for pasting into a chatbot. |
