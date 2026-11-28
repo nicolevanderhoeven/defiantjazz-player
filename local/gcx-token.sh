@@ -80,6 +80,7 @@ echo
 echo "To use your usual gcx settings instead, first note your current context (gcx config current-context),"
 echo "then run the login line without GCX_CONFIG; it switches gcx to dj-local. When you're done, switch back"
 echo "with: gcx config use-context <the name you noted>"
+
 # The loader leaves the incident night's window behind once the case is loaded; wait for it a while.
 i=0
 while [ ! -s "$WINDOW_FILE" ] && [ "$i" -lt 150 ]; do
