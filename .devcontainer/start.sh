@@ -77,7 +77,7 @@ token=$(printf '%s\n' "$tokenlog" | sed -n 's/.*gcx login dj-local .*--token \([
 gcx_ok=no
 if command -v gcx >/dev/null 2>&1 && [ -n "$token" ]; then
   if gcx login dj-local --yes --server http://localhost:3000 --token "$token" >/dev/null 2>&1 &&
-    gcx datasources list >/dev/null 2>&1; then
+    gcx --context dj-local datasources list >/dev/null 2>&1; then
     gcx_ok=yes
   fi
 fi
@@ -104,7 +104,7 @@ fi
   echo
   echo "Grafana (the evidence):  Ports tab > Grafana, or $grafana_url"
   if [ "$gcx_ok" = yes ]; then
-    echo "gcx:                     logged in, read-only ('gcx datasources list' shows loki, prometheus, tempo)"
+    echo "gcx:                     logged in, read-only ('gcx --context dj-local datasources list' shows loki, prometheus, tempo)"
   else
     echo "gcx:                     not logged in; run 'bash .devcontainer/start.sh' again, or see the README"
   fi

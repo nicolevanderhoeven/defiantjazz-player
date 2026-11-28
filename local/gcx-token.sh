@@ -64,13 +64,22 @@ if [ -z "$token" ]; then
 fi
 
 echo
-echo "Log gcx in to this stack (run this on your own machine, outside this repository's folder):"
+echo "Log gcx in to this stack (run this on your own machine, outside this repository's folder)."
+echo
+echo "Recommended: use a separate gcx settings file, so your own gcx logins stay untouched. Run this first,"
+echo "in the same terminal you'll start your agent from:"
+echo
+echo "  export GCX_CONFIG=~/.defiantjazz-gcx.yaml"
+echo
+echo "Then log in:"
 echo
 echo "  gcx login dj-local --yes --server ${DJ_GRAFANA_URL:-http://localhost:3000} --token $token"
 echo
-echo "Then check it with:  gcx datasources list"
-echo "(To keep your other gcx setups untouched, set GCX_CONFIG=/some/scratch/file first.)"
-
+echo "Then check it with:  gcx --context dj-local datasources list"
+echo
+echo "To use your usual gcx settings instead, first note your current context (gcx config current-context),"
+echo "then run the login line without GCX_CONFIG; it switches gcx to dj-local. When you're done, switch back"
+echo "with: gcx config use-context <the name you noted>"
 # The loader leaves the incident night's window behind once the case is loaded; wait for it a while.
 i=0
 while [ ! -s "$WINDOW_FILE" ] && [ "$i" -lt 150 ]; do
