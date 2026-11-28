@@ -17,12 +17,14 @@ Your first reply, to an opening such as "Start the Defiant Jazz case.", is only 
 
 ## Connect
 
-**Use the connection the player set up for this case: either the Grafana MCP server (`grafana-local`) or `gcx`. Don't switch to the other one on your own. Whenever you run `gcx`, add `--context dj-local`; never use another `gcx` context, which may point at a different Grafana. If neither works, ask the player which they set up instead of guessing.**
+**Use the connection the player set up for this case: either the Grafana MCP server (`grafana-local`) or `gcx`. Don't switch to the other one on your own. If neither works, ask the player which they set up instead of guessing.**
+
+**Never run `gcx` without `--context dj-local`, and put it straight after `gcx` (`gcx --context dj-local logs query ...`), so the player's permission rule for commands starting with `gcx --context dj-local` matches. Never use another `gcx` context, which may point at a different Grafana. If `gcx` says its current context isn't `dj-local`, say so to the player rather than working around it; the flag still keeps you on the right Grafana.**
 
 You need one of these set up. If neither is, ask the player to set it up.
 
 - **Grafana MCP server** (read-only), Streamable HTTP at `http://localhost:8000/mcp`. Pass the data source UID to its tools (`query_loki_logs`, `query_prometheus`, `search_tempo_traces`, `get_tempo_trace`, and so on).
-- **`gcx`**, logged in to the local Grafana (`gcx --context dj-local datasources list` should list three data sources). The player gets the login line from `docker compose logs gcx-token` in the stack's `local/` folder.
+- **`gcx`**, logged in to the local Grafana (`gcx --context dj-local datasources list` should list three data sources). When the player asks which data sources you can query, run that command and report what it prints; don't answer from memory. The player gets the login line from `docker compose logs gcx-token` in the stack's `local/` folder.
 
 `./up.sh` may have moved a port (it prints the real addresses and saves them in `local/.env`); use the player's ports instead of `8000` and `3000`.
 
@@ -54,25 +56,25 @@ Use that window (or `case_run="<DATE>"`) for every query. The data is loaded wit
 
 If those three values are still placeholders in angle brackets (this file was copied from the repository instead of made by the stack), or the window finds nothing, find the night yourself:
 
-> Everything in this Grafana is one past case, not live data, loaded with the incident on the most recent Thursday, so Grafana's default "last hour" range (and any relative range such as the last 24 hours) finds nothing. Before any other query, find the incident night yourself and never ask the player for it: query Loki (data source uid loki) for {service_namespace="kipsake-sleep-floor"} over a range reaching back 90 days, newest line first, limit 1 (for example startRfc3339 now-90d, endRfc3339 now, direction backward). That line's case_run field is the incident date. The incident night, in UTC, is from 20:30 on the evening before that date to 04:00 on that date (the power goes out at 03:02). Use that absolute window for every query after that.
+> Everything in this Grafana is one past case, not live data, loaded with the incident on the most recent Thursday, so Grafana's default "last hour" range (and any relative range such as the last 24 hours) finds nothing. Before any other query, find the incident night yourself and never ask the player for it: query Loki (data source uid loki) for {service_namespace="kipsake-sleep-floor"} over a range reaching back 90 days, newest line first, limit 1 (for example startRfc3339 now-90d, endRfc3339 now, direction backward; with `gcx --context dj-local logs query`, which returns newest lines first by default, use `--from now-90d --to now --limit 1`). That line's case_run field is the incident date. The incident night, in UTC, is from 20:30 on the evening before that date to 04:00 on that date (the power goes out at 03:02). Use that absolute window for every query after that.
 
 ## Commands that work (`gcx`)
 
-Pass the data source UID with `-d` and always `--context dj-local`. Use `--from` and `--to` with the window above, not `--since`.
+Pass the data source UID with `-d`, and always put `--context dj-local` straight after `gcx`. Use `--from` and `--to` with the window above, not `--since`.
 
 ```sh
 # Logs (LogQL)
-gcx logs query --context dj-local -d loki '{service_namespace="kipsake-sleep-floor", service_name="door"}' --from <FROM> --to <TO> --limit 50 -o raw
+gcx --context dj-local logs query -d loki '{service_namespace="kipsake-sleep-floor", service_name="door"}' --from <FROM> --to <TO> --limit 50 -o raw
 
 # Log counts: a metric query over logs is `gcx logs metrics`
-gcx logs metrics --context dj-local -d loki 'sum by (service_name) (count_over_time({service_namespace="kipsake-sleep-floor"}[1h]))' --from <FROM> --to <TO> --step 1h
+gcx --context dj-local logs metrics -d loki 'sum by (service_name) (count_over_time({service_namespace="kipsake-sleep-floor"}[1h]))' --from <FROM> --to <TO> --step 1h
 
 # Metrics (PromQL)
-gcx metrics query --context dj-local -d prometheus 'max(circuit_power_watts{service_namespace="kipsake-sleep-floor"})' --from <FROM> --to <TO> --step 1m
+gcx --context dj-local metrics query -d prometheus 'max(circuit_power_watts{service_namespace="kipsake-sleep-floor"})' --from <FROM> --to <TO> --step 1m
 
 # Traces (TraceQL): leave out the time range, see below
-gcx traces query --context dj-local -d tempo '{ resource.service.name = "kipsake-badge-tracking" }' --limit 5
-gcx traces get --context dj-local -d tempo <trace id>
+gcx --context dj-local traces query -d tempo '{ resource.service.name = "kipsake-badge-tracking" }' --limit 5
+gcx --context dj-local traces get -d tempo <trace id>
 ```
 
 ## The map

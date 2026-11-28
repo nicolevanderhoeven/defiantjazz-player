@@ -37,7 +37,7 @@ The evidence is in three Grafana data sources: Loki (logs), Prometheus (metrics)
 
 Both routes end by starting your agent in this repository's folder (the one you cloned), not a new empty folder. The repository's [`AGENTS.md`](AGENTS.md) (and `CLAUDE.md`, which points to it) holds your agent's instructions, and Claude Code, Codex, Cursor and many other agents read it by themselves, so there is nothing to copy or paste. The case's raw evidence is in this folder as plain files, so the instructions tell your agent not to open them, and Claude Code and Cursor are also set up to block it, so your agent has to query Grafana like an investigator.
 
-The instructions tell your agent to use only the route you set up, and to run `gcx` with `--context dj-local` so it never reaches another Grafana you use.
+The instructions tell your agent to use only the route you set up, and to run `gcx` as `gcx --context dj-local ...` (never without it) so it never reaches another Grafana you use. If you allow your agent's commands in advance, a rule for commands starting with `gcx --context dj-local` covers them.
 
 Then follow one route's steps, running its commands from `local/` unless a step says otherwise.
 
@@ -84,13 +84,30 @@ Then follow one route's steps, running its commands from `local/` unless a step 
 
    It prints a line that starts `gcx login dj-local`, which contains a read-only token (a password that lets `gcx` read the data but not change it), and a line like `The incident night (UTC): from <start> to <end>, case_run="...".` The case happened in the past, so a relative time range finds nothing; your agent works out the night itself. The first run can take a minute while the stack finishes loading.
 
-3. Run the whole `gcx login` line from step 2, then check that `gcx` can see the data sources:
+3. Log in. Pick one way:
+
+   - **Recommended: a separate settings file.** Your own `gcx` logins stay untouched. In the terminal you'll start your agent from, run:
+
+     ```sh
+     export GCX_CONFIG=~/.defiantjazz-gcx.yaml
+     ```
+
+     Then run the whole `gcx login` line from step 2 in the same terminal, so the login is saved in that file, and the agent you start from it uses it too.
+   - **Your usual settings.** First note which context `gcx` is on now:
+
+     ```sh
+     gcx config current-context
+     ```
+
+     Write the name down, then run the whole `gcx login` line from step 2. It adds a `dj-local` entry to your `gcx` settings and switches to it. When you've finished, switch back with `gcx config use-context <the name you noted>`.
+
+   Then check that `gcx` can see the data sources:
 
    ```sh
-   gcx datasources list
+   gcx --context dj-local datasources list
    ```
 
-   Success is a table with three rows: `loki`, `prometheus` and `tempo`. If you get an error or an empty table, refer to [If a step fails](#if-a-step-fails). Logging in adds a `dj-local` entry to the `gcx` settings and switches to it. If you use `gcx` for other Grafana instances, switch back later with `gcx config use-context <your earlier name>`.
+   Success is a table with three rows: `loki`, `prometheus` and `tempo`. If you get an error or an empty table, refer to [If a step fails](#if-a-step-fails).
 
 4. Start your agent in the folder you cloned (this repository), not a new empty folder:
 
@@ -147,7 +164,7 @@ The MCP server your agent connects to (`http://localhost:8000/mcp`) is two serve
 - **`docker compose up -d` says `address already in use`, or `port is already allocated`.** You started the stack without `./up.sh`, which does no port handling, and some of it didn't start. Run `./up.sh` in `local/`: it picks free ports and starts everything. Nothing else needs cleaning up.
 - **A command prints nothing, or says it's waiting.** On a first start it can wait up to a few minutes for the loader, which fills the stack with the case. If it prints nothing, run `docker compose ps -a` until `loader` shows `Exited (0)`, then run the command again.
 - **`claude mcp list` doesn't show `✔ Connected`.** Run `docker compose ps` and check that `mcp-grafana` is `Up`. If it isn't, run `./up.sh`. If you changed a port, add the server again with your port.
-- **`gcx datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
+- **`gcx --context dj-local datasources list` fails or shows no rows.** Run the `gcx login` line from step 2 again, and check that Grafana opens at <http://localhost:3000>.
 
 ## What's in this repository
 
